@@ -1,0 +1,803 @@
+/* ==========================================================================
+   Mercedes-Benz Premium Style - Used Cars Catalog Widget
+   ========================================================================== */
+
+/* Design Tokens & Variables */
+:root {
+    --bg-primary: #0a0a0b;
+    --bg-secondary: #121214;
+    --bg-tertiary: #1a1a1e;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.2);
+    --text-primary: #ffffff;
+    --text-secondary: #9a9a9f;
+    --text-muted: #626266;
+    --accent-color: #00adef; /* Mercedes EQ Blue accent or silver */
+    --accent-silver: #d9d9d9;
+    --status-available: #00d28a;
+    --status-reserved: #ffb800;
+    --status-sold: #ff4a4a;
+    --whatsapp-color: #25d366;
+    --whatsapp-hover: #20ba5a;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --border-radius: 4px; /* Mercedes corporate uses sharp/slight radii */
+}
+
+/* Reset & Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Catalog Container */
+.catalog-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Header Styles */
+.catalog-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.catalog-header h1 {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.catalog-subtitle {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+/* Filters Panel */
+.filters-panel {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: var(--transition-smooth);
+}
+
+#search-input {
+    width: 100%;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 14px 16px 14px 48px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition-smooth);
+}
+
+#search-input:focus {
+    border-color: var(--text-secondary);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+#search-input:focus + .search-icon {
+    color: var(--text-primary);
+}
+
+/* Filters Grid */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-item label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+}
+
+.filter-select {
+    width: 100%;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 12px 14px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255, 255, 255, 0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+.filter-select:hover {
+    border-color: var(--border-hover);
+}
+
+.filter-select:focus {
+    border-color: var(--text-secondary);
+}
+
+/* Active Filters */
+.active-filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.active-filter-pill {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+}
+
+.active-filter-pill:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-secondary);
+}
+
+.active-filter-pill button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.active-filter-pill button:hover {
+    color: var(--text-primary);
+}
+
+/* Loader */
+.catalog-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 16px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top: 3px solid var(--text-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.catalog-loader p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Grid Layout */
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+    transition: var(--transition-smooth);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Car Card */
+.car-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: var(--transition-smooth);
+}
+
+.car-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-hover);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.car-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 aspect ratio */
+    background-color: var(--bg-tertiary);
+    overflow: hidden;
+}
+
+.car-image-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.car-card:hover .car-image-wrapper img {
+    transform: scale(1.04);
+}
+
+.car-status-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: var(--border-radius);
+    z-index: 2;
+}
+
+.badge-available {
+    background-color: rgba(0, 210, 138, 0.15);
+    color: var(--status-available);
+    border: 1px solid rgba(0, 210, 138, 0.3);
+}
+
+.badge-reserved {
+    background-color: rgba(255, 184, 0, 0.15);
+    color: var(--status-reserved);
+    border: 1px solid rgba(255, 184, 0, 0.3);
+}
+
+.badge-sold {
+    background-color: rgba(255, 74, 74, 0.15);
+    color: var(--status-sold);
+    border: 1px solid rgba(255, 74, 74, 0.3);
+}
+
+/* Card Content */
+.car-info {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.car-brand-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+}
+
+.car-title-row {
+    margin-bottom: 8px;
+}
+
+.car-title-row h2 {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.car-version-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.car-meta-row {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.car-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.car-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.car-price-value {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.car-view-details {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.car-card:hover .car-view-details {
+    color: var(--text-primary);
+}
+
+/* No Results */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+}
+
+.no-results svg {
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.no-results h3 {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.no-results p {
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: var(--border-radius);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-decoration: none;
+    border: none;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+    border-color: var(--text-primary);
+}
+
+.btn-primary {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+.btn-primary:hover {
+    background-color: #d9d9d9;
+}
+
+.btn-whatsapp {
+    background-color: var(--whatsapp-color);
+    color: white;
+    width: 100%;
+    padding: 16px;
+    font-size: 14px;
+}
+
+.btn-whatsapp:hover {
+    background-color: var(--whatsapp-hover);
+}
+
+.whatsapp-icon {
+    flex-shrink: 0;
+}
+
+/* Modal Window Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 960px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    z-index: 1001;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: modalAppear 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    z-index: 1010;
+    transition: var(--transition-smooth);
+    padding: 4px;
+}
+
+.modal-close-btn:hover {
+    color: var(--text-primary);
+    transform: rotate(90deg);
+}
+
+/* Modal Body Layout */
+.modal-body-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    min-height: 500px;
+}
+
+/* Modal Gallery */
+.modal-gallery {
+    padding: 24px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.main-image-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 ratio */
+    background-color: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.main-image-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(10, 10, 11, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    z-index: 5;
+}
+
+.gallery-nav:hover {
+    background-color: rgba(10, 10, 11, 0.9);
+    border-color: white;
+}
+
+.gallery-prev {
+    left: 16px;
+}
+
+.gallery-next {
+    right: 16px;
+}
+
+.thumbnails-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 50px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+    transition: var(--transition-smooth);
+}
+
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail.active {
+    border-color: var(--text-primary);
+}
+
+.thumbnail:hover {
+    opacity: 0.8;
+}
+
+/* Modal Details */
+.modal-details {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.modal-header-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+}
+
+#modal-car-title {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--text-primary);
+}
+
+.version-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.modal-price {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 400;
+    margin-top: 14px;
+    color: var(--text-primary);
+}
+
+/* Specs Grid */
+.specs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.spec-tile {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spec-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.spec-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Description Section */
+.modal-description-section h3 {
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 6px;
+}
+
+.modal-description-section p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-line;
+}
+
+.modal-actions {
+    margin-top: auto;
+}
+
+/* Responsive Styles */
+@media (max-width: 860px) {
+    .modal-body-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-gallery {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px;
+    }
+
+    .modal-details {
+        padding: 20px;
+    }
+
+    .modal-content {
+        max-height: 95vh;
+    }
+
+    .catalog-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .catalog-container {
+        padding: 20px 12px;
+    }
+
+    .filters-panel {
+        padding: 16px;
+    }
+
+    .catalog-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .catalog-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .specs-grid {
+        grid-template-columns: 1fr;
+    }
+}

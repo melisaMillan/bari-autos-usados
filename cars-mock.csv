@@ -1,0 +1,7 @@
+id,marca,modelo,version,anio,precio,kilometros,transmision,combustible,color,imagenes,descripcion,estado,,vendedor_reserva,vencimiento_reserva,cola_espera
+1,Mercedes-Benz,Clase C 250,Avantgarde,2018,34900,48000,Automática,Nafta,Gris Plata,https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view;https://drive.google.com/file/d/1_A-B-C-D-E-F-G-H-I-J-K-L-M-N-O/view,Excelente estado.,Disponible,,,,
+2,Mercedes-Benz,GLA 250,AMG Line 4MATIC,2019,42500,32000,Automática,Nafta,Negro Cosmos,https://drive.google.com/file/d/2A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Estética AMG.,Disponible,,,,
+3,Mercedes-Benz,Clase A 200,Progressive,2021,37800,19500,Automática,Nafta,Blanco Polar,https://drive.google.com/file/d/3A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Pantalla táctil MBUX.,Disponible,,,,
+4,Audi,A4 2.0 TFSI,S-Tronic Mild Hybrid,2020,39500,28000,Automática,Nafta,Gris Daytona,https://drive.google.com/file/d/4A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Equipamiento S-Line.,Disponible,,,,
+5,BMW,320i,Sport Line,2018,31900,55000,Automática,Nafta,Azul Imperial,https://drive.google.com/file/d/5A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Excelente andar.,Reservado,,test@example.com,2026-07-09T18:00:00,otro@example.com
+6,Mercedes-Benz,Clase E 300,Avantgarde,2017,49000,72000,Automática,Nafta,Gris Selenita,https://drive.google.com/file/d/6A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Máximo confort.,Vendido,,,,
