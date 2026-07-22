@@ -64,6 +64,10 @@ const galleryNext = document.getElementById('gallery-next');
 document.addEventListener('DOMContentLoaded', () => {
     fetchAndLoadCatalog();
     setupEventListeners();
+    setupCarouselSwipe();
+    // Set footer year dynamically
+    const yearEl = document.getElementById('footer-year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
 });
 
 // --- LOAD DATA ---
@@ -153,12 +157,29 @@ function transformDriveUrl(url) {
     return url;
 }
 
-// Parse image field (semicolon-separated list of drive URLs)
+// Parse image field.
+// Supports two formats:
+// 1. Semicolon-separated list of Google Drive URLs (legacy).
+// 2. A single base URL from Digital Ocean Spaces ending in '/' (new).
+//    In this case, the code auto-generates URLs for 1.jpg, 2.jpg ... up to MAX_DO_IMAGES.
+const DO_SPACES_BASE = 'https://bari-storage.sfo3.digitaloceanspaces.com';
+const MAX_DO_IMAGES = 8; // Max photos per vehicle to probe
+
 function parseImagesField(imageField) {
     if (!imageField) return [];
-    
-    // Split by semicolon, filter out empty fields, and transform
-    return imageField
+    const trimmed = imageField.trim();
+
+    // Format 2: Digital Ocean folder URL
+    if (trimmed.startsWith(DO_SPACES_BASE) && trimmed.endsWith('/')) {
+        const urls = [];
+        for (let i = 1; i <= MAX_DO_IMAGES; i++) {
+            urls.push(`${trimmed}${i}.jpg`);
+        }
+        return urls;
+    }
+
+    // Format 1: Semicolon-separated Drive URLs (legacy / fallback)
+    return trimmed
         .split(';')
         .map(url => url.trim())
         .filter(url => url.length > 0)
@@ -553,4 +574,25 @@ function showErrorState() {
 
 function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// --- SWIPE SUPPORT FOR MOBILE CAROUSEL ---
+function setupCarouselSwipe() {
+    const mainImg = document.getElementById('modal-main-image');
+    if (!mainImg) return;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    mainImg.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    mainImg.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) { // min swipe distance
+            navigateGallery(diff > 0 ? 1 : -1);
+        }
+    }, { passive: true });
 }

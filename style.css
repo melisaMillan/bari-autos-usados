@@ -1,6 +1,277 @@
 /* ==========================================================================
-   Mercedes-Benz Premium Style - Used Cars Catalog Widget
+   Bari Usados - Premium Catalog Site
    ========================================================================== */
+
+/* ===== SITE HEADER ===== */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 11, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.site-header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+/* Logo */
+.site-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.site-logo-brand {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text-primary);
+}
+
+.site-logo-divider {
+    display: block;
+    width: 1px;
+    height: 20px;
+    background: var(--border-hover);
+}
+
+.site-logo-sub {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    color: var(--accent-color);
+    text-transform: uppercase;
+}
+
+/* Nav */
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.site-nav-link {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: var(--border-radius);
+    transition: var(--transition-smooth);
+}
+
+.site-nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.06);
+}
+
+.site-nav-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    color: var(--text-muted);
+}
+
+.site-nav-social:hover {
+    color: var(--accent-color);
+    background: rgba(0, 173, 239, 0.08);
+}
+
+/* ===== SITE FOOTER ===== */
+.site-footer {
+    background: #080809;
+    border-top: 1px solid var(--border-color);
+    margin-top: 80px;
+}
+
+.site-footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px 40px;
+    display: grid;
+    grid-template-columns: 240px 1fr 280px;
+    gap: 48px;
+    align-items: start;
+}
+
+/* Footer Brand Column */
+.footer-brand-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.footer-tagline {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.footer-email a {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.footer-email a:hover {
+    text-decoration: underline;
+}
+
+.footer-social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.footer-social-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: var(--transition-smooth);
+}
+
+.footer-social-btn:hover {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    background: rgba(0, 173, 239, 0.06);
+}
+
+/* Footer Locations */
+.footer-locations {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.footer-location-card {
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.footer-location-name {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.footer-location-card p {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.footer-tel-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 4px 0;
+}
+
+.footer-tel-list a {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-tel-list a:hover {
+    color: var(--accent-color);
+}
+
+.footer-tel-list small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.footer-hours {
+    font-size: 0.75rem !important;
+    color: var(--text-muted) !important;
+    margin-top: 4px;
+}
+
+/* Footer Map */
+.footer-map-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-map-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.footer-map-embed {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.footer-map-embed iframe {
+    display: block;
+    filter: grayscale(80%) invert(90%) contrast(85%);
+    transition: filter 0.3s;
+}
+
+.footer-map-embed:hover iframe {
+    filter: grayscale(30%) invert(90%) contrast(90%);
+}
+
+/* Footer Bottom Bar */
+.footer-bottom {
+    border-top: 1px solid var(--border-color);
+    padding: 20px;
+    text-align: center;
+}
+
+.footer-bottom p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
 
 /* Design Tokens & Variables */
 :root {
@@ -778,6 +1049,23 @@ body {
     .catalog-header h1 {
         font-size: 2rem;
     }
+
+    /* Footer responsive */
+    .site-footer-inner {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding: 40px 20px;
+    }
+
+    .footer-locations {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    /* Header responsive */
+    .site-nav-link:not(.site-nav-social) {
+        display: none;
+    }
 }
 
 @media (max-width: 480px) {
@@ -799,5 +1087,13 @@ body {
 
     .specs-grid {
         grid-template-columns: 1fr;
+    }
+
+    .site-header-inner {
+        padding: 0 14px;
+    }
+
+    .site-logo-brand {
+        font-size: 1.1rem;
     }
 }

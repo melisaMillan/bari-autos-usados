@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehículos Usados Seleccionados | Bari S.A.</title>
-    <meta name="description" content="Encuentra tu próximo vehículo usado seleccionado en Bari S.A. Calidad y confianza oficial.">
+    <title>Autos Usados Seleccionados en Tandil, Olavarría y Bahía Blanca | Bari Usados</title>
+    <meta name="description" content="Comprá tu próximo auto usado seleccionado en Bari Usados. Mercedes-Benz y multimarca. Sucursales en Tandil, Olavarría y Bahía Blanca. Unidades verificadas, listas para transferir.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Autos Usados Seleccionados | Bari Usados">
+    <meta property="og:description" content="Comprá tu próximo auto usado seleccionado en Bari Usados. Sucursales en Tandil, Olavarría y Bahía Blanca.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://www.instagram.com/bari.usados/">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,14 +18,73 @@
     <link rel="stylesheet" href="style.css">
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- SEO: JSON-LD Local Business Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoDealer",
+      "name": "Bari Usados",
+      "url": "https://melisamillan.github.io/bari-autos-usados/",
+      "logo": "https://www.instagram.com/bari.usados/",
+      "sameAs": [
+        "https://www.facebook.com/bari.usados",
+        "https://www.instagram.com/bari.usados/"
+      ],
+      "email": "barisa@bari-mercedesbenz.com.ar",
+      "location": [
+        {
+          "@type": "AutoDealer",
+          "name": "Bari Tandil",
+          "address": { "@type": "PostalAddress", "streetAddress": "Ruta 226 Km. 166", "addressLocality": "Tandil", "addressRegion": "Buenos Aires", "addressCountry": "AR" },
+          "telephone": "+542494447955"
+        },
+        {
+          "@type": "AutoDealer",
+          "name": "Bari Olavarría",
+          "address": { "@type": "PostalAddress", "streetAddress": "Ruta 226 Km. 296", "addressLocality": "Olavarría", "addressRegion": "Buenos Aires", "addressCountry": "AR" },
+          "telephone": "+542284424330"
+        },
+        {
+          "@type": "AutoDealer",
+          "name": "Bari Bahía Blanca",
+          "address": { "@type": "PostalAddress", "streetAddress": "Alfredo Palacios 2010", "addressLocality": "Bahía Blanca", "addressRegion": "Buenos Aires", "addressCountry": "AR" },
+          "telephone": "+542914560009"
+        }
+      ]
+    }
+    </script>
 </head>
 <body>
 
+    <!-- ===== SITE HEADER ===== -->
+    <header class="site-header" role="banner">
+        <div class="site-header-inner">
+            <!-- Logo / Brand -->
+            <a href="/" class="site-logo" aria-label="Bari Usados - Inicio">
+                <span class="site-logo-brand">BARI</span>
+                <span class="site-logo-divider"></span>
+                <span class="site-logo-sub">USADOS</span>
+            </a>
+            <!-- Nav Links -->
+            <nav class="site-nav" aria-label="Navegación principal">
+                <a href="#catalog-grid" class="site-nav-link">Catálogo</a>
+                <a href="#footer-contact" class="site-nav-link">Sucursales</a>
+                <a href="https://www.instagram.com/bari.usados/" target="_blank" rel="noopener noreferrer" class="site-nav-link site-nav-social" aria-label="Instagram de Bari Usados">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
+                <a href="https://www.facebook.com/bari.usados" target="_blank" rel="noopener noreferrer" class="site-nav-link site-nav-social" aria-label="Facebook de Bari Usados">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== CATALOG SECTION ===== -->
     <div class="catalog-container">
-        <!-- Header Section -->
+        <!-- Catalog Hero -->
         <header class="catalog-header">
-            <h1 id="catalog-title">Usados Seleccionados</h1>
-            <p class="catalog-subtitle">Unidades exclusivas verificadas y listas para transferir</p>
+            <h1 id="catalog-title">Autos Usados Seleccionados</h1>
+            <p class="catalog-subtitle">Unidades exclusivas verificadas y listas para transferir · Tandil · Olavarría · Bahía Blanca</p>
         </header>
 
         <!-- Search and Filters Panel -->
@@ -93,6 +157,93 @@
             <button id="reset-filters-btn" class="btn btn-secondary">Restablecer filtros</button>
         </div>
     </div>
+    <!-- ===== SITE FOOTER ===== -->
+    <footer class="site-footer" id="footer-contact" role="contentinfo">
+        <div class="site-footer-inner">
+
+            <!-- Brand Column -->
+            <div class="footer-brand-col">
+                <div class="footer-logo">
+                    <span class="site-logo-brand">BARI</span>
+                    <span class="site-logo-divider"></span>
+                    <span class="site-logo-sub">USADOS</span>
+                </div>
+                <p class="footer-tagline">Concesionario oficial Mercedes-Benz.<br>Autos usados seleccionados en la Provincia de Buenos Aires.</p>
+                <p class="footer-email"><a href="mailto:barisa@bari-mercedesbenz.com.ar">barisa@bari-mercedesbenz.com.ar</a></p>
+                <div class="footer-social-links">
+                    <a href="https://www.instagram.com/bari.usados/" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Instagram Bari Usados">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        <span>@bari.usados</span>
+                    </a>
+                    <a href="https://www.facebook.com/bari.usados" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Facebook Bari Usados">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        <span>bari.usados</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sucursales -->
+            <div class="footer-locations">
+                <!-- Tandil -->
+                <address class="footer-location-card">
+                    <h3 class="footer-location-name">Bari Tandil</h3>
+                    <p>Ruta 226 Km. 166, Tandil, Buenos Aires</p>
+                    <ul class="footer-tel-list">
+                        <li><a href="tel:+542494447955">+54 0249 444-7955</a></li>
+                        <li><small>Adm.: <a href="tel:+542494606423">+54 0249 460-6423</a></small></li>
+                        <li><small>Serv.: <a href="tel:+542494517989">+54 0249 451-7989</a></small></li>
+                        <li><small>Rep.: <a href="tel:+542494670110">+54 0249 467-0110</a></small></li>
+                    </ul>
+                    <p class="footer-hours">Lun–Vie 8:30–17:00 · Sáb 8:30–12:30</p>
+                </address>
+                <!-- Olavarría -->
+                <address class="footer-location-card">
+                    <h3 class="footer-location-name">Bari Olavarría</h3>
+                    <p>Ruta 226 Km. 296, Olavarría, Buenos Aires</p>
+                    <ul class="footer-tel-list">
+                        <li><a href="tel:+542284424330">+54 0228 442-4330</a></li>
+                        <li><small>Adm.: <a href="tel:+542284547972">+54 0228 454-7972</a></small></li>
+                        <li><small>Serv.: <a href="tel:+542284650376">+54 0228 465-0376</a></small></li>
+                        <li><small>Rep.: <a href="tel:+542284566074">+54 0228 456-6074</a></small></li>
+                    </ul>
+                    <p class="footer-hours">Lun–Vie 8:30–17:00 · Sáb 8:30–12:30</p>
+                </address>
+                <!-- Bahía Blanca -->
+                <address class="footer-location-card">
+                    <h3 class="footer-location-name">Bari Bahía Blanca</h3>
+                    <p>Alfredo Palacios 2010 / Camino Parque Sesquicentenario 1630, Bahía Blanca</p>
+                    <ul class="footer-tel-list">
+                        <li><a href="tel:+542914560009">+54 0291 456-0009</a></li>
+                        <li><small>Adm.: <a href="tel:+542915229625">+54 0291 522-9625</a></small></li>
+                        <li><small>Serv.: <a href="tel:+542914614447">+54 0291 461-4447</a></small></li>
+                        <li><small>Rep.: <a href="tel:+542914411548">+54 0291 441-1548</a></small></li>
+                    </ul>
+                    <p class="footer-hours">Lun–Vie 8:30–17:00 · Sáb 8:30–12:30</p>
+                </address>
+            </div>
+
+            <!-- Mapa Tandil (principal) -->
+            <div class="footer-map-col">
+                <p class="footer-map-label">Sede Principal — Tandil</p>
+                <div class="footer-map-embed">
+                    <iframe
+                        title="Ubicación Bari Tandil"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3164.0!2d-59.1333!3d-37.3167!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDE5JzAwLjEiUyA1OcKwMDgnMDAuMCJX!5e0!3m2!1ses!2sar!4v1234567890"
+                        width="100%"
+                        height="220"
+                        style="border:0;"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <span id="footer-year"></span> Bari S.A. · Todos los derechos reservados · Concesionario Oficial Mercedes-Benz</p>
+        </div>
+    </footer>
 
     <!-- Details Modal -->
     <div id="details-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-car-title">
