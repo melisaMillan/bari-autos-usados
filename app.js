@@ -165,7 +165,6 @@ function transformDriveUrl(url) {
 // 1. Semicolon-separated list of Google Drive URLs (legacy).
 // 2. A single base URL from Digital Ocean Spaces ending in '/' (new).
 //    In this case, the code auto-generates URLs for 1.jpg, 2.jpg ... up to MAX_DO_IMAGES.
-const DO_SPACES_BASE = 'https://bari-storage.sfo3.digitaloceanspaces.com';
 const MAX_DO_IMAGES = 8; // Max photos per vehicle to probe
 
 function parseImagesField(imageField) {
@@ -173,9 +172,10 @@ function parseImagesField(imageField) {
     const trimmed = imageField.trim();
 
     // Format 2: Digital Ocean folder URL
-    if (trimmed.startsWith(DO_SPACES_BASE) && trimmed.endsWith('/')) {
+    if (trimmed.includes('digitaloceanspaces.com') && trimmed.endsWith('/')) {
         const urls = [];
         for (let i = 1; i <= MAX_DO_IMAGES; i++) {
+            // Actualmente fuerza .jpg. Si se usan .png, no cargan. 
             urls.push(`${trimmed}${i}.jpg`);
         }
         return urls;
