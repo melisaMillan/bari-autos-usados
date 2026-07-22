@@ -1101,3 +1101,170 @@ body {
         font-size: 1.1rem;
     }
 }
+
+/* ===== SOCIAL CARD BUTTON ===== */
+.btn-social-generate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #1a237e, #283593);
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    margin-top: 10px;
+}
+
+.btn-social-generate:hover {
+    background: linear-gradient(135deg, #283593, #3949ab);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(26, 35, 126, 0.4);
+}
+
+.btn-social-generate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ===== SOCIAL CARD (hidden off-screen for html2canvas rendering) ===== */
+#social-card-wrapper {
+    position: fixed;
+    top: -9999px;
+    left: -9999px;
+    width: 1080px;
+    z-index: -1;
+    pointer-events: none;
+}
+
+#social-card {
+    width: 1080px;
+    background: #fff;
+    font-family: 'Inter', 'Outfit', sans-serif;
+    overflow: hidden;
+}
+
+.sc-image-section {
+    position: relative;
+    width: 1080px;
+    height: 810px; /* 4:3 */
+    overflow: hidden;
+    background: #111;
+}
+
+.sc-image-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sc-logo-badge {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    padding: 10px 36px;
+    border-radius: 6px;
+}
+
+.sc-info-section {
+    background: #fff;
+    padding: 36px 48px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.sc-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sc-status {
+    background: #1a237e;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 8px 20px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.sc-model {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+}
+
+.sc-specs-row {
+    display: flex;
+    gap: 40px;
+    font-size: 22px;
+    color: #333;
+}
+
+.sc-specs-row strong {
+    font-weight: 700;
+}
+
+.sc-price-block {
+    background: #1a237e;
+    border-radius: 8px;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.sc-price-label {
+    color: rgba(255,255,255,0.75);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.sc-price-value {
+    color: #fff;
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+}
+
+.sc-footer {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-top: 1px solid #eee;
+    padding-top: 16px;
+    font-size: 22px;
+}
+
+.sc-brand {
+    color: #555;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.sc-brand-name {
+    color: #1a237e;
+    font-size: 30px;
+    font-weight: 900;
+    font-style: italic;
+}

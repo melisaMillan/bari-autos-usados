@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchAndLoadCatalog();
     setupEventListeners();
     setupCarouselSwipe();
+    setupSocialCardButton();
     // Set footer year dynamically
     const yearEl = document.getElementById('footer-year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -473,6 +474,8 @@ function createPill(category, label, onRemove) {
 
 // --- MODAL ACTIONS ---
 function openModal(car) {
+    currentCarData = car; // Store for social card generation
+
     // Populate simple specs
     modalCarBrand.textContent = car.marca;
     modalCarTitle.textContent = car.modelo;
@@ -650,4 +653,138 @@ function setupCarouselSwipe() {
             navigateGallery(diff > 0 ? 1 : -1);
         }
     }, { passive: true });
+}
+
+// --- SOCIAL CARD GENERATOR ---
+// N8N webhook URL for social card upload
+// Replace with your actual n8n webhook URL for the social image flow
+const N8N_SOCIAL_WEBHOOK = 'https://bipolos.app.n8n.cloud/webhook/bari-social-image';
+
+let currentCarData = null; // Store current car data for social card
+
+function setupSocialCardButton() {
+    const btn = document.getElementById('social-card-btn');
+    if (!btn) return;
+    btn.addEventListener('click', generateSocialCard);
+}
+
+async function generateSocialCard() {
+    if (!currentCarData) return;
+
+    const btn = document.getElementById('social-card-btn');
+    btn.disabled = true;
+    btn.textContent = 'Generando...';
+
+    try {
+        // 1. Populate the hidden social card with current car data
+        populateSocialCard(currentCarData);
+
+        // 2. Wait a tick for the DOM to paint
+        await new Promise(r => setTimeout(r, 300));
+
+        // 3. Capture the card with html2canvas
+        const canvas = await html2canvas(document.getElementById('social-card'), {
+            scale: 1,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            width: 1080,
+            logging: false
+        });
+
+        // 4. Convert canvas to blob (JPEG, 92% quality)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+        const base64 = await blobToBase64(blob);
+
+        // 5. Send to n8n webhook
+        const patente = currentCarData.patente || currentCarData.id || 'sin-patente';
+        await sendToN8N(base64, patente, currentCarData);
+
+        btn.textContent = '✅ Imagen enviada a n8n!';
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Generar imagen para Redes`;
+        }, 3000);
+
+    } catch (err) {
+        console.error('Error generando imagen:', err);
+        // Fallback: descarga directa al celular/compu
+        try {
+            const canvas = await html2canvas(document.getElementById('social-card'), {
+                scale: 1, useCORS: true, allowTaint: false, backgroundColor: '#ffffff', width: 1080
+            });
+            const link = document.createElement('a');
+            link.download = `${currentCarData.patente || 'bari-auto'}-social.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.92);
+            link.click();
+            btn.textContent = '📥 Descargada localmente';
+        } catch(e2) {
+            btn.textContent = '❌ Error - Intentá de nuevo';
+        }
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Generar imagen para Redes`;
+        }, 3000);
+    }
+}
+
+function populateSocialCard(car) {
+    // Image: use the first image of the car
+    const scImage = document.getElementById('sc-image');
+    scImage.src = car.imagenes && car.imagenes.length > 0 
+        ? car.imagenes[0] 
+        : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=1080';
+
+    // Status
+    const scStatus = document.getElementById('sc-status');
+    scStatus.textContent = car.estado === 'Disponible' ? 'UNIDAD DISPONIBLE' : car.estado.toUpperCase();
+    scStatus.style.background = car.estado === 'Reservado' ? '#e65100' : '#1a237e';
+
+    // Model
+    document.getElementById('sc-model').textContent = `${car.marca} ${car.modelo}`;
+
+    // Specs
+    document.getElementById('sc-km').textContent = formatNumber(car.kilometros);
+    document.getElementById('sc-year').textContent = car.anio;
+
+    // Price
+    document.getElementById('sc-price').textContent = `${car.moneda} ${formatNumber(car.precio)}`;
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function sendToN8N(base64Image, patente, car) {
+    const payload = {
+        action: 'upload_social_image',
+        patente: patente,
+        marca: car.marca,
+        modelo: car.modelo,
+        anio: car.anio,
+        precio: car.precio,
+        moneda: car.moneda,
+        image_base64: base64Image,
+        image_mime: 'image/jpeg',
+        filename: `${patente}/social.jpeg`
+    };
+
+    const response = await fetch(N8N_SOCIAL_WEBHOOK, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw new Error(`n8n respondió con status ${response.status}`);
+    }
+
+    return response;
 }
