@@ -1,7 +1,9 @@
-id,marca,modelo,version,anio,precio,kilometros,transmision,combustible,color,imagenes,descripcion,estado,,vendedor_reserva,vencimiento_reserva,cola_espera
-1,Mercedes-Benz,Clase C 250,Avantgarde,2018,34900,48000,Automática,Nafta,Gris Plata,https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view;https://drive.google.com/file/d/1_A-B-C-D-E-F-G-H-I-J-K-L-M-N-O/view,Excelente estado.,Disponible,,,,
-2,Mercedes-Benz,GLA 250,AMG Line 4MATIC,2019,42500,32000,Automática,Nafta,Negro Cosmos,https://drive.google.com/file/d/2A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Estética AMG.,Disponible,,,,
-3,Mercedes-Benz,Clase A 200,Progressive,2021,37800,19500,Automática,Nafta,Blanco Polar,https://drive.google.com/file/d/3A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Pantalla táctil MBUX.,Disponible,,,,
-4,Audi,A4 2.0 TFSI,S-Tronic Mild Hybrid,2020,39500,28000,Automática,Nafta,Gris Daytona,https://drive.google.com/file/d/4A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Equipamiento S-Line.,Disponible,,,,
-5,BMW,320i,Sport Line,2018,31900,55000,Automática,Nafta,Azul Imperial,https://drive.google.com/file/d/5A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Excelente andar.,Reservado,,test@example.com,2026-07-09T18:00:00,otro@example.com
-6,Mercedes-Benz,Clase E 300,Avantgarde,2017,49000,72000,Automática,Nafta,Gris Selenita,https://drive.google.com/file/d/6A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Máximo confort.,Vendido,,,,
+patente,marca,modelo,version,anio,precio,kilometros,transmision,combustible,color,sucursal,imagenes,descripcion,estado,id_meli,vendedor_reserva,vencimiento_reserva,cola_espera
+AB123CD,Mercedes-Benz,Clase C 250,Avantgarde,2018,34900,48000,Automática,Nafta,Gris Plata,Tandil,https://drive.google.com/file/d/1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view;https://drive.google.com/file/d/1_A-B-C-D-E-F-G-H-I-J-K-L-M-N-O/view,Excelente estado.,Disponible,,,,
+CD456EF,Mercedes-Benz,GLA 250,AMG Line 4MATIC,2019,42500,32000,Automática,Nafta,Negro Cosmos,Olavarría,https://drive.google.com/file/d/2A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Estética AMG.,Disponible,,,,
+EF789GH,Mercedes-Benz,Clase A 200,Progressive,2021,37800,19500,Automática,Nafta,Blanco Polar,Tandil,https://drive.google.com/file/d/3A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Pantalla táctil MBUX.,Disponible,,,,
+GH012IJ,Audi,A4 2.0 TFSI,S-Tronic Mild Hybrid,2020,39500,28000,Automática,Nafta,Gris Daytona,Olavarría,https://drive.google.com/file/d/4A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Equipamiento S-Line.,Disponible,MLA1901953177,,,
+IJ345KL,BMW,320i,Sport Line,2018,31900,55000,Automática,Nafta,Azul Imperial,Tandil,https://drive.google.com/file/d/5A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Excelente andar.,Reservado,,test@example.com,2026-07-09T18:00:00,otro@example.com
+KL678MN,Mercedes-Benz,Clase E 300,Avantgarde,2017,49000,72000,Automática,Nafta,Gris Selenita,Bahía Blanca,https://drive.google.com/file/d/6A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P/view,Máximo confort.,Vendido,,,,
+MN901OP,Mercedes-Benz,B 200,,2013,11500,145000,Manual,Nafta,Blanca,Tandil,https://bari-autos.nyc3.digitaloceanspaces.com/7-Mercedes-Benz-B200/,,Disponible,,,,
+OP234QR,Mercedes-Benz,L 1634/45 CD,,2010,26500,1600000,Manual,Diesel,Blanca,Olavarría,,Tracción: 4x2 - Configuración: Tractor.,Disponible,,,,

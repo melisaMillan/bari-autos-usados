@@ -104,7 +104,7 @@ function fetchAndLoadCatalog() {
                 });
                 
                 return {
-                    id: cleanRow.id || Math.random().toString(36).substring(2, 9),
+                    id: cleanRow.patente || cleanRow.id || Math.random().toString(36).substring(2, 9),
                     marca: (cleanRow.marca || '').trim(),
                     modelo: (cleanRow.modelo || '').trim(),
                     version: (cleanRow.version || '').trim(),
@@ -114,7 +114,7 @@ function fetchAndLoadCatalog() {
                     transmision: (cleanRow.transmision || 'Manual').trim(),
                     combustible: (cleanRow.combustible || 'Nafta').trim(),
                     color: (cleanRow.color || 'Gris').trim(),
-                    ciudad: (cleanRow.ciudad || 'Tandil').trim(),
+                    ciudad: (cleanRow.sucursal || cleanRow.ciudad || 'Tandil').trim(),
                     imagenes: parseImagesField(cleanRow.imagenes),
                     descripcion: (cleanRow.descripcion || '').trim(),
                     estado: (cleanRow.estado || 'Disponible').trim()
