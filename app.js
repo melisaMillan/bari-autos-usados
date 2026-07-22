@@ -497,6 +497,27 @@ function openModal(car) {
         ? car.imagenes 
         : ['https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800'];
     
+    // Build thumbnails once when opening modal
+    modalThumbnails.innerHTML = '';
+    currentImages.forEach((url, index) => {
+        const thumb = document.createElement('img');
+        thumb.src = url;
+        thumb.className = index === 0 ? 'thumbnail active' : 'thumbnail';
+        thumb.alt = 'Miniatura';
+        thumb.onclick = () => {
+            currentImageIndex = index;
+            updateModalGallery();
+        };
+        
+        // Esconder si falla la carga
+        thumb.onerror = function() {
+            this.style.display = 'none';
+            this.setAttribute('data-broken', 'true');
+        };
+
+        modalThumbnails.appendChild(thumb);
+    });
+
     currentImageIndex = 0;
     updateModalGallery();
 
@@ -538,25 +559,14 @@ function updateModalGallery() {
         galleryNext.classList.remove('hidden');
     }
 
-    // Build thumbnails
-    modalThumbnails.innerHTML = '';
-    currentImages.forEach((url, index) => {
-        const thumb = document.createElement('img');
-        thumb.src = url;
-        thumb.className = index === currentImageIndex ? 'thumbnail active' : 'thumbnail';
-        thumb.alt = 'Miniatura';
-        thumb.onclick = () => {
-            currentImageIndex = index;
-            updateModalGallery();
-        };
-        
-        // Esconder si falla la carga (ej: DO Spaces autogenerado que no existe)
-        thumb.onerror = function() {
-            this.style.display = 'none';
-            this.setAttribute('data-broken', 'true');
-        };
-
-        modalThumbnails.appendChild(thumb);
+    // Update thumbnails active state without recreating them
+    const thumbs = modalThumbnails.querySelectorAll('.thumbnail');
+    thumbs.forEach((thumb, index) => {
+        if (index === currentImageIndex) {
+            thumb.classList.add('active');
+        } else {
+            thumb.classList.remove('active');
+        }
     });
 }
 

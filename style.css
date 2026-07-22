@@ -548,7 +548,7 @@ body {
 .car-image-wrapper {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 aspect ratio */
+    padding-top: 75%; /* 4:3 aspect ratio */
     background-color: var(--bg-tertiary);
     overflow: hidden;
 }
@@ -853,7 +853,7 @@ body {
 .main-image-container {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 ratio */
+    padding-top: 75%; /* 4:3 ratio */
     background-color: var(--bg-tertiary);
     border-radius: var(--border-radius);
     overflow: hidden;
