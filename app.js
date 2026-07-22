@@ -24,7 +24,7 @@ const activeFilters = {
     city: 'all',
     brand: 'all',
     year: 'all',
-    price: 'all',
+    type: 'all',
     sort: 'default'
 };
 
@@ -33,7 +33,7 @@ const searchInput = document.getElementById('search-input');
 const cityFilter = document.getElementById('city-filter');
 const brandFilter = document.getElementById('brand-filter');
 const yearFilter = document.getElementById('year-filter');
-const priceFilter = document.getElementById('price-filter');
+const typeFilter = document.getElementById('type-filter');
 const sortFilter = document.getElementById('sort-filter');
 const catalogGrid = document.getElementById('catalog-grid');
 const catalogLoader = document.getElementById('catalog-loader');
@@ -110,6 +110,8 @@ function fetchAndLoadCatalog() {
                     version: (cleanRow.version || '').trim(),
                     anio: parseInt(cleanRow.anio) || new Date().getFullYear(),
                     precio: parseFloat(cleanRow.precio) || 0,
+                    moneda: (cleanRow.moneda || 'USD').trim().toUpperCase(),
+                    tipo: (cleanRow.tipo || 'Auto').trim(),
                     kilometros: parseInt(cleanRow.kilometros) || 0,
                     transmision: (cleanRow.transmision || 'Manual').trim(),
                     combustible: (cleanRow.combustible || 'Nafta').trim(),
@@ -214,19 +216,13 @@ function buildFiltersDropdowns() {
         yearFilter.innerHTML += `<option value="${year}">${year} o posterior</option>`;
     });
 
-    // Prices (Find Max Price and create logical segments)
-    const prices = vehicles.map(v => v.precio);
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
-    
-    priceFilter.innerHTML = '<option value="all">Cualquier precio</option>';
-    
-    // Generate price steps of 10k or 20k depending on max
-    const step = maxPrice > 60000 ? 15000 : 10000;
-    const stepsCount = Math.ceil(maxPrice / step);
-    
-    for (let i = 1; i <= stepsCount; i++) {
-        const value = i * step;
-        priceFilter.innerHTML += `<option value="${value}">Hasta USD ${formatNumber(value)}</option>`;
+    // Unique Types
+    const types = [...new Set(vehicles.map(v => v.tipo))].sort();
+    if(typeFilter) {
+        typeFilter.innerHTML = '<option value="all">Todos los tipos</option>';
+        types.forEach(t => {
+            if(t) typeFilter.innerHTML += `<option value="${t}">${t}</option>`;
+        });
     }
 }
 
@@ -256,10 +252,12 @@ function setupEventListeners() {
         applyFilters();
     });
 
-    priceFilter.addEventListener('change', (e) => {
-        activeFilters.price = e.target.value;
-        applyFilters();
-    });
+    if(typeFilter) {
+        typeFilter.addEventListener('change', (e) => {
+            activeFilters.type = e.target.value;
+            applyFilters();
+        });
+    }
 
     sortFilter.addEventListener('change', (e) => {
         activeFilters.sort = e.target.value;
@@ -304,10 +302,10 @@ function applyFilters() {
         // Year filter
         const matchesYear = activeFilters.year === 'all' || car.anio >= parseInt(activeFilters.year);
 
-        // Price filter
-        const matchesPrice = activeFilters.price === 'all' || car.precio <= parseFloat(activeFilters.price);
+        // Type filter
+        const matchesType = activeFilters.type === 'all' || car.tipo === activeFilters.type;
 
-        return matchesQuery && matchesCity && matchesBrand && matchesYear && matchesPrice;
+        return matchesQuery && matchesCity && matchesBrand && matchesYear && matchesType;
     });
 
     // Sorting
@@ -395,7 +393,7 @@ function renderCatalogGrid() {
                     </div>
                 </div>
                 <div class="car-price-row">
-                    <span class="car-price-value">USD ${formatNumber(car.precio)}</span>
+                    <span class="car-price-value">${car.moneda} ${formatNumber(car.precio)}</span>
                     <span class="car-view-details">
                         Ver Detalles
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -441,11 +439,11 @@ function renderActivePills() {
         });
     }
 
-    // Add price pill
-    if (activeFilters.price !== 'all') {
-        createPill('Precio', `<= USD ${formatNumber(activeFilters.price)}`, () => {
-            activeFilters.price = 'all';
-            priceFilter.value = 'all';
+    // Add type pill
+    if (activeFilters.type !== 'all') {
+        createPill('Tipo', activeFilters.type, () => {
+            activeFilters.type = 'all';
+            if(typeFilter) typeFilter.value = 'all';
             applyFilters();
         });
     }
@@ -479,7 +477,7 @@ function openModal(car) {
     modalCarBrand.textContent = car.marca;
     modalCarTitle.textContent = car.modelo;
     modalCarVersion.textContent = car.version;
-    modalCarPrice.textContent = `USD ${formatNumber(car.precio)}`;
+    modalCarPrice.textContent = `${car.moneda} ${formatNumber(car.precio)}`;
     modalSpecYear.textContent = car.anio;
     modalSpecKm.textContent = `${formatNumber(car.kilometros)} km`;
     modalSpecTransmission.textContent = car.transmision;
@@ -527,6 +525,9 @@ function closeModal() {
 function updateModalGallery() {
     // Set main image
     modalMainImage.src = currentImages[currentImageIndex];
+    modalMainImage.onerror = function() {
+        this.src = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800';
+    };
     
     // Navigation arrows visible state
     if (currentImages.length <= 1) {
@@ -537,34 +538,45 @@ function updateModalGallery() {
         galleryNext.classList.remove('hidden');
     }
 
-    // Render thumbnails
+    // Build thumbnails
     modalThumbnails.innerHTML = '';
-    
-    // Only render thumbnails if there is more than 1 image
-    if (currentImages.length > 1) {
-        currentImages.forEach((imageSrc, index) => {
-            const thumb = document.createElement('div');
-            thumb.className = `thumbnail ${index === currentImageIndex ? 'active' : ''}`;
-            thumb.innerHTML = `<img src="${imageSrc}" alt="Miniatura ${index + 1}">`;
-            thumb.addEventListener('click', () => {
-                currentImageIndex = index;
-                updateModalGallery();
-            });
-            modalThumbnails.appendChild(thumb);
-        });
-    }
+    currentImages.forEach((url, index) => {
+        const thumb = document.createElement('img');
+        thumb.src = url;
+        thumb.className = index === currentImageIndex ? 'thumbnail active' : 'thumbnail';
+        thumb.alt = 'Miniatura';
+        thumb.onclick = () => {
+            currentImageIndex = index;
+            updateModalGallery();
+        };
+        
+        // Esconder si falla la carga (ej: DO Spaces autogenerado que no existe)
+        thumb.onerror = function() {
+            this.style.display = 'none';
+            this.setAttribute('data-broken', 'true');
+        };
+
+        modalThumbnails.appendChild(thumb);
+    });
 }
 
 function navigateGallery(direction) {
-    currentImageIndex += direction;
+    // Prevent wrapping around logic
+    let nextIndex = currentImageIndex + direction;
+    if (nextIndex < 0) nextIndex = currentImages.length - 1;
+    if (nextIndex >= currentImages.length) nextIndex = 0;
     
-    // Loop navigation
-    if (currentImageIndex < 0) {
-        currentImageIndex = currentImages.length - 1;
-    } else if (currentImageIndex >= currentImages.length) {
-        currentImageIndex = 0;
+    // Skip broken images
+    const thumbs = document.querySelectorAll('.thumbnail');
+    let attempts = 0;
+    while(thumbs[nextIndex] && thumbs[nextIndex].getAttribute('data-broken') === 'true' && attempts < currentImages.length) {
+        nextIndex = nextIndex + direction;
+        if (nextIndex < 0) nextIndex = currentImages.length - 1;
+        if (nextIndex >= currentImages.length) nextIndex = 0;
+        attempts++;
     }
     
+    currentImageIndex = nextIndex;
     updateModalGallery();
 }
 
@@ -574,14 +586,14 @@ function resetAllFilters() {
     if(cityFilter) cityFilter.value = 'all';
     brandFilter.value = 'all';
     yearFilter.value = 'all';
-    priceFilter.value = 'all';
+    if(typeFilter) typeFilter.value = 'all';
     sortFilter.value = 'default';
     
     activeFilters.query = '';
     activeFilters.city = 'all';
     activeFilters.brand = 'all';
     activeFilters.year = 'all';
-    activeFilters.price = 'all';
+    activeFilters.type = 'all';
     activeFilters.sort = 'default';
     
     applyFilters();

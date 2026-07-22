@@ -2,6 +2,10 @@
    Bari Usados - Premium Catalog Site
    ========================================================================== */
 
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 /* ===== SITE HEADER ===== */
 .site-header {
     position: sticky;
