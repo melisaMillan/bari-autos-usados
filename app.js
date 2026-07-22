@@ -665,6 +665,17 @@ let currentCarData = null; // Store current car data for social card
 function setupSocialCardButton() {
     const btn = document.getElementById('social-card-btn');
     if (!btn) return;
+
+    // Check URL param or session (so it persists while navigating the page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === 'bari2025' || sessionStorage.getItem('bari_admin') === 'true';
+
+    if (isAdmin) {
+        // Save in session so it survives page reloads within the same tab
+        sessionStorage.setItem('bari_admin', 'true');
+        btn.classList.remove('hidden');
+    }
+
     btn.addEventListener('click', generateSocialCard);
 }
 
