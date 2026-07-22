@@ -21,6 +21,7 @@ let currentImageIndex = 0;
 
 const activeFilters = {
     query: '',
+    city: 'all',
     brand: 'all',
     year: 'all',
     price: 'all',
@@ -29,6 +30,7 @@ const activeFilters = {
 
 // --- DOM ELEMENTS ---
 const searchInput = document.getElementById('search-input');
+const cityFilter = document.getElementById('city-filter');
 const brandFilter = document.getElementById('brand-filter');
 const yearFilter = document.getElementById('year-filter');
 const priceFilter = document.getElementById('price-filter');
@@ -112,6 +114,7 @@ function fetchAndLoadCatalog() {
                     transmision: (cleanRow.transmision || 'Manual').trim(),
                     combustible: (cleanRow.combustible || 'Nafta').trim(),
                     color: (cleanRow.color || 'Gris').trim(),
+                    ciudad: (cleanRow.ciudad || 'Tandil').trim(),
                     imagenes: parseImagesField(cleanRow.imagenes),
                     descripcion: (cleanRow.descripcion || '').trim(),
                     estado: (cleanRow.estado || 'Disponible').trim()
@@ -188,6 +191,15 @@ function parseImagesField(imageField) {
 
 // --- BUILD FILTERS ---
 function buildFiltersDropdowns() {
+    // Unique Cities
+    const cities = [...new Set(vehicles.map(v => v.ciudad))].sort();
+    if(cityFilter) {
+        cityFilter.innerHTML = '<option value="all">Todas las ciudades</option>';
+        cities.forEach(city => {
+            cityFilter.innerHTML += `<option value="${city}">${city}</option>`;
+        });
+    }
+
     // Unique Brands
     const brands = [...new Set(vehicles.map(v => v.marca))].sort();
     brandFilter.innerHTML = '<option value="all">Todas las marcas</option>';
@@ -227,6 +239,13 @@ function setupEventListeners() {
     });
 
     // Select filters
+    if(cityFilter) {
+        cityFilter.addEventListener('change', (e) => {
+            activeFilters.city = e.target.value;
+            applyFilters();
+        });
+    }
+
     brandFilter.addEventListener('change', (e) => {
         activeFilters.brand = e.target.value;
         applyFilters();
@@ -276,6 +295,9 @@ function applyFilters() {
             car.version.toLowerCase().includes(activeFilters.query) ||
             car.descripcion.toLowerCase().includes(activeFilters.query);
 
+        // City filter
+        const matchesCity = activeFilters.city === 'all' || car.ciudad === activeFilters.city;
+
         // Brand filter
         const matchesBrand = activeFilters.brand === 'all' || car.marca === activeFilters.brand;
 
@@ -285,7 +307,7 @@ function applyFilters() {
         // Price filter
         const matchesPrice = activeFilters.price === 'all' || car.precio <= parseFloat(activeFilters.price);
 
-        return matchesQuery && matchesBrand && matchesYear && matchesPrice;
+        return matchesQuery && matchesCity && matchesBrand && matchesYear && matchesPrice;
     });
 
     // Sorting
@@ -392,6 +414,15 @@ function renderCatalogGrid() {
 function renderActivePills() {
     activeFiltersContainer.innerHTML = '';
     
+    // Add city pill
+    if (activeFilters.city !== 'all') {
+        createPill('Ciudad', activeFilters.city, () => {
+            activeFilters.city = 'all';
+            if(cityFilter) cityFilter.value = 'all';
+            applyFilters();
+        });
+    }
+
     // Add brand pill
     if (activeFilters.brand !== 'all') {
         createPill('Marca', activeFilters.brand, () => {
@@ -540,12 +571,14 @@ function navigateGallery(direction) {
 // --- HELPERS ---
 function resetAllFilters() {
     searchInput.value = '';
+    if(cityFilter) cityFilter.value = 'all';
     brandFilter.value = 'all';
     yearFilter.value = 'all';
     priceFilter.value = 'all';
     sortFilter.value = 'default';
     
     activeFilters.query = '';
+    activeFilters.city = 'all';
     activeFilters.brand = 'all';
     activeFilters.year = 'all';
     activeFilters.price = 'all';
