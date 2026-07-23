@@ -865,7 +865,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    background-color: #000; /* Fondo negro para los bordes vacíos */
 }
 
 .gallery-nav {
@@ -915,12 +916,7 @@ body {
     flex-shrink: 0;
     border: 2px solid transparent;
     transition: var(--transition-smooth);
-}
-
-.thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Aplica directo a la etiqueta img */
 }
 
 .thumbnail.active {
