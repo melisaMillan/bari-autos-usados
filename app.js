@@ -104,28 +104,53 @@ function fetchAndLoadCatalog() {
                     cleanRow[cleanKey] = row[key];
                 });
                 
+                // Helper to parse numbers like "40.000" or "$58.000.000"
+                const parseNumberString = (str) => {
+                    if (!str) return 0;
+                    return parseInt(str.toString().replace(/\D/g, '')) || 0;
+                };
+
+                const dominio = (cleanRow.dominio || cleanRow.patente || cleanRow.id || '').trim();
+
+                // Generate DO urls from Dominio
+                const doImages = [];
+                if (dominio) {
+                    for (let i = 1; i <= MAX_DO_IMAGES; i++) {
+                        doImages.push(`https://bari-storage.sfo3.cdn.digitaloceanspaces.com/${dominio}/${i}.jpg`);
+                    }
+                }
+
+                // Determine availability
+                let estado = 'Disponible';
+                if (cleanRow.disponible && cleanRow.disponible.toUpperCase() === 'NO') {
+                    estado = 'Reservado'; // O Vendido
+                } else if (cleanRow.estado && (cleanRow.estado.toLowerCase() === 'reservado' || cleanRow.estado.toLowerCase() === 'vendido')) {
+                    estado = cleanRow.estado;
+                }
+
                 return {
-                    id: cleanRow.patente || cleanRow.id || Math.random().toString(36).substring(2, 9),
+                    id: dominio || Math.random().toString(36).substring(2, 9),
                     marca: (cleanRow.marca || '').trim(),
-                    modelo: (cleanRow.modelo || '').trim(),
+                    modelo: (cleanRow.descripcion_de_modelo || cleanRow.modelo || '').trim(),
                     version: (cleanRow.version || '').trim(),
-                    anio: parseInt(cleanRow.anio) || new Date().getFullYear(),
-                    precio: parseFloat(cleanRow.precio) || 0,
-                    moneda: (cleanRow.moneda || 'USD').trim().toUpperCase(),
-                    tipo: (cleanRow.tipo || 'Auto').trim(),
-                    kilometros: parseInt(cleanRow.kilometros) || 0,
+                    anio: parseInt(cleanRow.ano || cleanRow.anio) || new Date().getFullYear(),
+                    precio: parseNumberString(cleanRow.precio_final_en_ars || cleanRow.precio),
+                    moneda: 'ARS', // Asumimos ARS por la columna precio_final_en_ars
+                    tipo: (cleanRow.segmento || cleanRow.tipo || 'Auto').trim(),
+                    kilometros: parseNumberString(cleanRow.km || cleanRow.kilometros),
                     transmision: (cleanRow.transmision || 'Manual').trim(),
                     combustible: (cleanRow.combustible || 'Nafta').trim(),
                     color: (cleanRow.color || 'Gris').trim(),
                     ciudad: (cleanRow.sucursal || cleanRow.ciudad || 'Tandil').trim(),
-                    imagenes: parseImagesField(cleanRow.imagenes),
-                    descripcion: (cleanRow.descripcion || '').trim(),
-                    estado: (cleanRow.estado || 'Disponible').trim()
+                    imagenes: doImages.length > 0 ? doImages : parseImagesField(cleanRow.imagenes),
+                    descripcion: (cleanRow.descripcion_para_publicacion || cleanRow.descripcion || '').trim(),
+                    estado: estado,
+                    publicar: (cleanRow.publicar || 'SI').trim().toUpperCase()
                 };
             });
 
-            // Filter out empty rows (where brand or model is missing)
-            vehicles = vehicles.filter(v => v.marca && v.modelo);
+            // Filter out empty rows and rows marked not to publish
+            vehicles = vehicles.filter(v => v.marca && v.modelo && v.publicar !== 'NO');
             
             // Build the filter dropdown menus dynamically
             buildFiltersDropdowns();
