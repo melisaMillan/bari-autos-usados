@@ -1143,124 +1143,173 @@ body {
 
 #social-card {
     width: 1080px;
-    background: #fff;
-    font-family: 'Inter', 'Outfit', sans-serif;
+    height: 1350px;
+    background: #ffffff;
+    font-family: 'Poppins', 'Inter', sans-serif;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .sc-image-section {
     position: relative;
     width: 1080px;
-    height: 810px; /* 4:3 */
+    height: 700px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
-    background: #111;
 }
 
 .sc-image-section img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.sc-logo-badge {
-    position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.75);
-    color: #fff;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: 0.25em;
-    padding: 10px 36px;
-    border-radius: 6px;
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
 }
 
 .sc-info-section {
-    background: #fff;
-    padding: 36px 48px 28px;
+    flex: 1;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    align-items: center;
+    padding: 0 40px;
 }
 
-.sc-top-row {
+.sc-badges-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    justify-content: center;
+    width: 100%;
+    gap: 30px;
+    margin-top: -20px;
+    z-index: 2;
+    background: #fff;
+    padding: 10px 0;
 }
 
 .sc-status {
-    background: #1a237e;
-    color: #fff;
-    font-size: 22px;
+    background: #ffffff;
+    color: #000;
+    font-size: 26px;
     font-weight: 800;
-    letter-spacing: 0.08em;
-    padding: 8px 20px;
-    border-radius: 4px;
-    white-space: nowrap;
+    padding: 12px 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .sc-model {
-    font-size: 26px;
+    font-size: 32px;
     font-weight: 700;
     color: #111;
 }
 
 .sc-specs-row {
     display: flex;
-    gap: 40px;
-    font-size: 22px;
-    color: #333;
+    gap: 50px;
+    font-size: 28px;
+    color: #222;
+    margin-top: 40px;
+    margin-bottom: 50px;
 }
 
-.sc-specs-row strong {
-    font-weight: 700;
-}
-
-.sc-price-block {
-    background: #1a237e;
-    border-radius: 8px;
-    padding: 18px 32px;
+.sc-spec {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 12px;
 }
 
-.sc-price-label {
-    color: rgba(255,255,255,0.75);
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
+.sc-spec svg {
+    color: #111;
+    width: 28px;
+    height: 28px;
 }
 
-.sc-price-value {
-    color: #fff;
-    font-size: 52px;
-    font-weight: 900;
-    letter-spacing: 0.02em;
+.sc-fin-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 20px;
+}
+
+.sc-fin-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.sc-fin-label {
+    color: #040854;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.sc-fin-value-box {
+    background: #040854;
+    color: #ffffff;
+    font-size: 56px;
+    font-weight: 800;
+    padding: 10px 30px;
+    border-radius: 8px;
+}
+
+.sc-fin-divider {
+    color: #040854;
+    font-size: 48px;
+    font-weight: 300;
+    margin-top: -10px;
+    margin-bottom: -10px;
+    text-align: left;
+    width: 100%;
+    padding-left: 140px;
+}
+
+.sc-cuotas-row {
+    color: #040854;
+}
+
+.sc-fin-months {
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.sc-fin-line {
+    font-size: 40px;
+    font-weight: 300;
+}
+
+.sc-fin-value-text {
+    font-size: 46px;
+    font-weight: 800;
 }
 
 .sc-footer {
+    margin-top: auto;
+    margin-bottom: 30px;
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    border-top: 1px solid #eee;
-    padding-top: 16px;
-    font-size: 22px;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
-.sc-brand {
+.sc-footer-brand {
+    font-size: 48px;
+}
+
+.sc-fin-word {
+    color: #040854;
+    font-weight: 800;
+}
+
+.sc-brand-word {
     color: #555;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-weight: 300;
 }
 
-.sc-brand-name {
-    color: #1a237e;
-    font-size: 30px;
-    font-weight: 900;
-    font-style: italic;
+.sc-footer-legal {
+    font-size: 20px;
+    color: #555;
+    font-weight: 500;
 }

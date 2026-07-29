@@ -145,7 +145,9 @@ function fetchAndLoadCatalog() {
                     imagenes: doImages.length > 0 ? doImages : parseImagesField(cleanRow.imagenes),
                     descripcion: (cleanRow.descripcion_para_publicacion || cleanRow.descripcion || '').trim(),
                     estado: estado,
-                    publicar: (cleanRow.publicar || 'SI').trim().toUpperCase()
+                    publicar: (cleanRow.publicar || 'SI').trim().toUpperCase(),
+                    anticipo: parseNumberString(cleanRow.anticipo),
+                    cuotas: parseNumberString(cleanRow['12'] || cleanRow.cuotas_12 || cleanRow.cuotas)
                 };
             });
 
@@ -774,7 +776,9 @@ function populateSocialCard(car) {
     // Status
     const scStatus = document.getElementById('sc-status');
     scStatus.textContent = car.estado === 'Disponible' ? 'UNIDAD DISPONIBLE' : car.estado.toUpperCase();
-    scStatus.style.background = car.estado === 'Reservado' ? '#e65100' : '#1a237e';
+    
+    // Si no está disponible, el mockup no dice nada sobre colores, pero dejemos el texto en negro o destacado
+    // El mockup tiene "UNIDAD DISPONIBLE" con borde y fondo blanco, letras negras. Lo estilizaremos en CSS.
 
     // Model
     document.getElementById('sc-model').textContent = `${car.marca} ${car.modelo}`;
@@ -783,8 +787,20 @@ function populateSocialCard(car) {
     document.getElementById('sc-km').textContent = formatNumber(car.kilometros);
     document.getElementById('sc-year').textContent = car.anio;
 
-    // Price
-    document.getElementById('sc-price').textContent = `${car.moneda} ${formatNumber(car.precio)}`;
+    // Price / Financing
+    const priceBlock = document.getElementById('sc-price-block');
+    const financingBlock = document.getElementById('sc-financing-block');
+    
+    if (car.anticipo > 0 && car.cuotas > 0) {
+        if(priceBlock) priceBlock.style.display = 'none';
+        if(financingBlock) financingBlock.style.display = 'flex';
+        document.getElementById('sc-anticipo').textContent = `$ ${formatNumber(car.anticipo)}`;
+        document.getElementById('sc-cuotas').textContent = `$ ${formatNumber(car.cuotas)}`;
+    } else {
+        if(priceBlock) priceBlock.style.display = 'flex';
+        if(financingBlock) financingBlock.style.display = 'none';
+        if(document.getElementById('sc-price')) document.getElementById('sc-price').textContent = `$ ${formatNumber(car.precio)}`;
+    }
 }
 
 function blobToBase64(blob) {

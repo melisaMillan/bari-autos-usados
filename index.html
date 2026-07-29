@@ -338,28 +338,66 @@
     </div>
 
     <!-- Social Card (hidden, used for html2canvas rendering) -->
+    <!-- Social Card (hidden, used for html2canvas rendering) -->
     <div id="social-card-wrapper" aria-hidden="true">
         <div id="social-card">
             <div class="sc-image-section">
                 <img id="sc-image" src="" alt="" crossorigin="anonymous">
-                <div class="sc-logo-badge">BARI</div>
             </div>
+            
             <div class="sc-info-section">
-                <div class="sc-top-row">
-                    <span class="sc-status" id="sc-status">UNIDAD DISPONIBLE</span>
-                    <span class="sc-model" id="sc-model">Mercedes-Benz Clase C</span>
+                <!-- Badges Row -->
+                <div class="sc-badges-row">
+                    <div class="sc-status" id="sc-status">UNIDAD DISPONIBLE</div>
+                    <div class="sc-model" id="sc-model">Mercedes-Benz B 200</div>
                 </div>
+
+                <!-- Specs Row -->
                 <div class="sc-specs-row">
-                    <span>&#10003; Kilometraje: <strong id="sc-km">0</strong></span>
-                    <span>&#10003; Año: <strong id="sc-year">2024</strong></span>
+                    <div class="sc-spec">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Kilometraje: <span id="sc-km">145.000</span>
+                    </div>
+                    <div class="sc-spec">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Año: <span id="sc-year">2013</span>
+                    </div>
                 </div>
-                <div class="sc-price-block">
-                    <div class="sc-price-label">PRECIO</div>
-                    <div class="sc-price-value" id="sc-price">USD 0</div>
+
+                <!-- Financing / Price Block -->
+                <div id="sc-financing-block" class="sc-fin-block">
+                    <div class="sc-fin-row sc-anticipo-row">
+                        <span class="sc-fin-label">ANTICIPO</span>
+                        <div class="sc-fin-value-box" id="sc-anticipo">$ 11.000.000</div>
+                    </div>
+                    
+                    <div class="sc-fin-divider">
+                        <span>+</span>
+                    </div>
+
+                    <div class="sc-fin-row sc-cuotas-row">
+                        <span class="sc-fin-label">CUOTAS</span>
+                        <span class="sc-fin-months">12</span>
+                        <span class="sc-fin-line">—</span>
+                        <span class="sc-fin-value-text" id="sc-cuotas">$1.182.867</span>
+                    </div>
                 </div>
+                
+                <div id="sc-price-block" class="sc-fin-block" style="display: none;">
+                    <div class="sc-fin-row sc-anticipo-row" style="justify-content: center;">
+                        <span class="sc-fin-label">PRECIO FINAL</span>
+                        <div class="sc-fin-value-box" id="sc-price">$ 0</div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
                 <div class="sc-footer">
-                    <span class="sc-brand">FINANCIACIÓN</span>
-                    <span class="sc-brand-name">Bari</span>
+                    <div class="sc-footer-brand">
+                        <span class="sc-fin-word">FINANCIACIÓN</span> <span class="sc-brand-word">Bari</span>
+                    </div>
+                    <div class="sc-footer-legal">
+                        *El valor de las cuotas incluye IVA sobre los intereses.
+                    </div>
                 </div>
             </div>
         </div>
