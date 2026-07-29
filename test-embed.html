@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bari S.A. | Mercedes-Benz Oficial (Simulación de Embebido)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #000000;
+            border-bottom: 1px solid #1a1a1a;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-placeholder {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        nav a {
+            color: #999;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        nav a:hover {
+            color: #fff;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 40px 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .breadcrumb {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .breadcrumb a {
+            color: #888;
+            text-decoration: none;
+        }
+        /* Iframe Responsive Wrapper */
+        .iframe-container {
+            width: 100%;
+            background-color: #0a0a0b;
+            border: 1px solid #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        /*
+           Important for iframes: 
+           Using a fixed min-height is recommended to ensure the catalog content is fully visible 
+           and scrollable. Setting height="800px" or height="1000px" is common.
+        */
+        .iframe-container iframe {
+            width: 100%;
+            height: 900px;
+            border: none;
+            display: block;
+        }
+        footer {
+            background-color: #000000;
+            border-top: 1px solid #1a1a1a;
+            padding: 30px 40px;
+            text-align: center;
+            color: #555;
+            font-size: 0.85rem;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-placeholder">BARI S.A.</div>
+        <nav>
+            <a href="#">Modelos</a>
+            <a href="#">Postventa</a>
+            <a href="#" style="color: #fff; border-bottom: 2px solid #fff; padding-bottom: 4px;">Usados</a>
+            <a href="#">Contacto</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="breadcrumb">
+            <a href="#">Inicio</a> &gt; <a href="#">Vehículos</a> &gt; <span>Usados Seleccionados</span>
+        </div>
+
+        <!-- The responsive iframe embed starts here -->
+        <div class="iframe-container">
+            <iframe src="index.html" title="Catálogo de Autos Usados de Bari S.A."></iframe>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Bari S.A. Concesionario Oficial Mercedes-Benz. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

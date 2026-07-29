@@ -1,0 +1,275 @@
+{
+  "name": "Bari Autos Integrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bari-autos",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "e6a004ef-d5f3-4fb0-8d80-5bfa95f32a7b",
+      "name": "Webhook Apps Script",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "value1": "={{$json.action}}",
+              "value2": "Publicar"
+            },
+            {
+              "value1": "={{$json.action}}",
+              "value2": "Eliminar",
+              "output": 1
+            }
+          ]
+        }
+      },
+      "id": "fa221c5b-3b32-4752-9fa9-6f164b3ef8b9",
+      "name": "Router de Acción",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.car.id_meli}}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "id": "c138b3c9-9eb1-460d-8ea9-a864d420a9a1",
+      "name": "¿Es Publicación Nueva?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        720,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mercadolibre.com/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{$json.car.marca}} {{$json.car.modelo}} {{$json.car.version}} ({{$json.car.anio}})\",\n  \"category_id\": \"MLA1744\",\n  \"price\": {{$json.car.precio}},\n  \"currency_id\": \"ARS\",\n  \"available_quantity\": 1,\n  \"buying_mode\": \"classified\",\n  \"listing_type_id\": \"free\",\n  \"condition\": \"used\",\n  \"location\": {\n    \"address_line\": \"Av. Pringles 1234\",\n    \"zip_code\": \"7400\",\n    \"city\": {\n      \"id\": \"TUxBQ09MQTY2MTY\"\n    },\n    \"state\": {\n      \"id\": \"AR-B\"\n    }\n  },\n  \"pictures\": [\n    {\n      \"source\": \"{{ $json.car.imagenes.split(';')[0].includes('/file/d/') ? 'https://lh3.googleusercontent.com/d/' + $json.car.imagenes.split(';')[0].split('/file/d/')[1].split('/')[0] : $json.car.imagenes.split(';')[0] }}\"\n    }\n  ],\n  \"attributes\": [\n    {\n      \"id\": \"BRAND\",\n      \"value_name\": \"{{$json.car.marca}}\"\n    },\n    {\n      \"id\": \"MODEL\",\n      \"value_name\": \"{{$json.car.modelo}}\"\n    },\n    {\n      \"id\": \"TRIM\",\n      \"value_name\": \"{{$json.car.version}}\"\n    },\n    {\n      \"id\": \"VEHICLE_YEAR\",\n      \"value_name\": \"{{$json.car.anio}}\"\n    },\n    {\n      \"id\": \"KILOMETERS\",\n      \"value_name\": \"{{$json.car.kilometros}} km\"\n    },\n    {\n      \"id\": \"DOORS\",\n      \"value_name\": \"{{$json.car.puertas || '4'}}\"\n    },\n    {\n      \"id\": \"FUEL_TYPE\",\n      \"value_name\": \"{{$json.car.combustible}}\"\n    },\n    {\n      \"id\": \"COLOR\",\n      \"value_name\": \"{{$json.car.color || 'Gris'}}\"\n    },\n    {\n      \"id\": \"LICENSE_PLATE\",\n      \"value_name\": \"{{$json.car.patente || 'No especificada'}}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "e44c20be-7e9b-4bf1-b9db-3f8f949c23a0",
+      "name": "Meli: Crear Item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        960,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.mercadolibre.com/items/{{$json.car.id_meli}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"price\": {{$json.car.precio}},\n  \"status\": \"active\"\n}",
+        "options": {}
+      },
+      "id": "b3e04743-39d3-4cf1-97b7-6de59b58fe0a",
+      "name": "Meli: Actualizar Item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        960,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/me/feed",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"¡Nueva Unidad Disponible! \\n🚗 {{$json.car.marca}} {{$json.car.modelo}} {{$json.car.version}}\\n📅 Año: {{$json.car.anio}}\\n📉 Kilómetros: {{$json.car.kilometros}} km\\n💵 Precio: USD {{$json.car.precio}}\\n\\nConsúltanos por WhatsApp al {{$json.whatsapp}} o visítanos en Bari S.A.\",\n  \"link\": \"{{$json.car.imagenes.split(';')[0]}}\"\n}",
+        "options": {}
+      },
+      "id": "f5509d73-2e02-4b25-b461-9c6bc76bb5a1",
+      "name": "Facebook: Publicar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1240,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.mercadolibre.com/items/{{$json.car.id_meli}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"status\": \"closed\"\n}",
+        "options": {}
+      },
+      "id": "993ff06c-85a2-4a0b-8d76-d9cd18eb9ee0",
+      "name": "Meli: Pausar/Cerrar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        720,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "id"
+        },
+        "sheetName": "Hoja 1",
+        "rowNumber": "={{$json.rowIndex}}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_meli": "={{$json.body.id}}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "e25f82bb-2fb2-4bf1-a4b5-ccf2db6bbfe8",
+      "name": "Sheets: Guardar Meli ID",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1120,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Apps Script": {
+      "main": [
+        [
+          {
+            "node": "Router de Acción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router de Acción": {
+      "main": [
+        [
+          {
+            "node": "¿Es Publicación Nueva?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Meli: Pausar/Cerrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Publicación Nueva?": {
+      "main": [
+        [
+          {
+            "node": "Meli: Crear Item",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Meli: Actualizar Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meli: Crear Item": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Guardar Meli ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Guardar Meli ID": {
+      "main": [
+        [
+          {
+            "node": "Facebook: Publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meli: Actualizar Item": {
+      "main": [
+        [
+          {
+            "node": "Facebook: Publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f7d755c3-1d02-401d-b638-3482a095ff37",
+  "id": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
