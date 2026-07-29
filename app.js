@@ -147,7 +147,8 @@ function fetchAndLoadCatalog() {
                     estado: estado,
                     publicar: (cleanRow.publicar || 'SI').trim().toUpperCase(),
                     anticipo: parseNumberString(cleanRow.anticipo),
-                    cuotas: parseNumberString(cleanRow['12'] || cleanRow.cuotas_12 || cleanRow.cuotas)
+                    cuotas: parseNumberString(cleanRow['12'] || cleanRow.cuotas_12 || cleanRow.cuotas),
+                    financiador: (cleanRow.financiador || 'Bari').trim()
                 };
             });
 
@@ -800,6 +801,12 @@ function populateSocialCard(car) {
         if(priceBlock) priceBlock.style.display = 'flex';
         if(financingBlock) financingBlock.style.display = 'none';
         if(document.getElementById('sc-price')) document.getElementById('sc-price').textContent = `$ ${formatNumber(car.precio)}`;
+    }
+
+    // Financiador
+    const scFinanciador = document.getElementById('sc-financiador');
+    if (scFinanciador) {
+        scFinanciador.textContent = car.financiador || 'Bari';
     }
 }
 
