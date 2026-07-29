@@ -13,7 +13,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Style sheet -->
     <link rel="stylesheet" href="style.css">
     <!-- PapaParse for CSV parsing -->
@@ -95,11 +95,11 @@
             </div>
             
             <div class="filters-grid">
-                <!-- City Filter -->
+                <!-- Type Filter -->
                 <div class="filter-item">
-                    <label for="city-filter">Ciudad</label>
-                    <select id="city-filter" class="filter-select">
-                        <option value="all">Todas las ciudades</option>
+                    <label for="type-filter">Tipo de Vehículo</label>
+                    <select id="type-filter" class="filter-select">
+                        <option value="all">Todos los tipos</option>
                     </select>
                 </div>
 
@@ -119,11 +119,11 @@
                     </select>
                 </div>
 
-                <!-- Type Filter -->
+                <!-- City Filter -->
                 <div class="filter-item">
-                    <label for="type-filter">Tipo de Vehículo</label>
-                    <select id="type-filter" class="filter-select">
-                        <option value="all">Todos los tipos</option>
+                    <label for="city-filter">Ubicación</label>
+                    <select id="city-filter" class="filter-select">
+                        <option value="all">Todas las ubicaciones</option>
                     </select>
                 </div>
 
@@ -176,12 +176,12 @@
                     <span class="site-logo-divider"></span>
                     <span class="site-logo-sub">USADOS</span>
                 </div>
-                <p class="footer-tagline">Concesionario oficial Mercedes-Benz.<br>Autos usados seleccionados en la Provincia de Buenos Aires.</p>
-                <p class="footer-email"><a href="mailto:barisa@bari-mercedesbenz.com.ar">barisa@bari-mercedesbenz.com.ar</a></p>
+                <p class="footer-tagline">Unidad de negocios de Bari, Concesionario Oficial Mercedes-Benz en la provincia de Buenos Aires.<br>Encontrá tu vehículo usado reacondicionado por nuestro taller oficial.</p>
+                <p class="footer-email"><a href="mailto:barisa@bari-mercedesbenz.com.ar">barimb.usados@gmail.com</a></p>
                 <div class="footer-social-links">
                     <a href="https://www.instagram.com/bari.usados/" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Instagram Bari Usados">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                        <span>@bari.usados</span>
+                        <span>bari.usados</span>
                     </a>
                     <a href="https://www.facebook.com/bari.usados" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Facebook Bari Usados">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
@@ -232,7 +232,7 @@
 
             <!-- Mapa Tandil (principal) -->
             <div class="footer-map-col">
-                <p class="footer-map-label">Sede Principal — Tandil</p>
+                <p class="footer-map-label">Casa Central — Tandil</p>
                 <div class="footer-map-embed">
                     <iframe
                         title="Ubicación Bari Tandil"

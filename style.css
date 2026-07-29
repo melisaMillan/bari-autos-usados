@@ -38,9 +38,9 @@
 }
 
 .site-logo-brand {
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 400;
     letter-spacing: 0.12em;
     color: var(--text-primary);
 }
@@ -53,10 +53,10 @@
 }
 
 .site-logo-sub {
-    font-family: var(--font-heading);
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.25em;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     color: var(--accent-color);
     text-transform: uppercase;
 }

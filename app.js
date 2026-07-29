@@ -197,7 +197,7 @@ function buildFiltersDropdowns() {
     // Unique Cities
     const cities = [...new Set(vehicles.map(v => v.ciudad))].sort();
     if(cityFilter) {
-        cityFilter.innerHTML = '<option value="all">Todas las ciudades</option>';
+        cityFilter.innerHTML = '<option value="all">Todas las ubicaciones</option>';
         cities.forEach(city => {
             cityFilter.innerHTML += `<option value="${city}">${city}</option>`;
         });
@@ -390,7 +390,7 @@ function renderCatalogGrid() {
                         <span>${formatNumber(car.kilometros)} km</span>
                     </div>
                     <div class="car-meta-item">
-                        <span>${car.transmision}</span>
+                        <span>${car.ciudad}</span>
                     </div>
                 </div>
                 <div class="car-price-row">
