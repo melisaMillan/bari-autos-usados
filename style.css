@@ -37,6 +37,16 @@
     flex-shrink: 0;
 }
 
+/* Logo image */
+.site-logo-img {
+    height: 44px;
+    width: auto;
+    display: block;
+    /* The logo has a dark bg that blends with the header */
+    border-radius: 4px;
+}
+
+/* Keep old text-logo spans in case they're used elsewhere */
 .site-logo-brand {
     font-family: 'Poppins', sans-serif;
     font-size: 1.2rem;
@@ -127,6 +137,14 @@
     align-items: center;
     gap: 10px;
 }
+
+.footer-logo-img {
+    height: 56px;
+    width: auto;
+    display: block;
+    border-radius: 4px;
+}
+
 
 .footer-tagline {
     font-size: 0.82rem;

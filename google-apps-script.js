@@ -1,6 +1,20 @@
 const N8N_WEBHOOK_URL="https://bipolos.app.n8n.cloud/webhook/bari-autos" 
 const SHEET_CONFIG_NAME = "Configuración";
 const SHEET_COLAS_NAME = "Colas de Reserva";
+const SHEET_PUBLICACIONES_NAME = "Publicaciones";
+
+// Colores de filas
+const COLOR_PUBLISHED  = '#b7e1cd'; // Verde suave — publicado
+const COLOR_ELIMINATED = '#FCE8E6'; // Rojo muy tenue — dado de baja
+const COLOR_OUTDATED   = '#FFE599'; // Amarillo — publicación desactualizada
+
+// Campos críticos monitoreados para detectar cambios post-publicación
+const SNAPSHOT_FIELD_KEYS = [
+  'precio', 'precio_final_en_ars', 'imagenes',
+  'descripcion_para_publicacion', 'descripcion',
+  'estado', 'km', 'sucursal', 'financiador',
+  'precio_financiado', 'anticipo'
+];
 
 
 /**
@@ -14,6 +28,8 @@ function onOpen() {
       .addSeparator()
       .addItem('🌐 Publicar en redes', 'publishActiveRow')
       .addItem('❌ Eliminar publicación', 'deleteActiveRow')
+      .addSeparator()
+      .addItem('🔍 Verificar publicaciones desactualizadas', 'checkOutdatedPublications')
       .addToUi();
 }
 
@@ -367,6 +383,16 @@ function sendRowToN8n(action) {
     }
   });
 
+  // ── Validación: combustible obligatorio ──────────────────────────────────
+  const combustibleValue = (carData['combustible'] || '').toString().trim();
+  if (!combustibleValue) {
+    return SpreadsheetApp.getUi().alert(
+      '⚠️ Campo Requerido',
+      'El campo "Combustible" es obligatorio y no está completado en esta fila.\n\nPor favor completalo en la planilla antes de publicar.',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
+
   const payload = { action: action, rowIndex: activeRowIndex, timestamp: new Date().toISOString(), car: carData };
   SpreadsheetApp.getActiveSpreadsheet().toast('Enviando datos a n8n...', 'Integración', 5);
 
@@ -377,12 +403,204 @@ function sendRowToN8n(action) {
     
     if (responseCode >= 200 && responseCode < 300) {
       SpreadsheetApp.getActiveSpreadsheet().toast('¡Operación realizada con éxito!', 'Integración', 5);
+      
+      // Actualizar columna estado
       const statusColIndex = headers.indexOf('estado') + 1;
-      if (statusColIndex > 0) sheet.getRange(activeRowIndex, statusColIndex).setValue(action === 'Eliminar' ? 'Vendido' : 'Disponible');
+      if (statusColIndex > 0) {
+        sheet.getRange(activeRowIndex, statusColIndex).setValue(action === 'Eliminar' ? 'Vendido' : 'Disponible');
+      }
+      
+      // ── Colorear la fila completa ────────────────────────────────────────
+      const lastCol = sheet.getLastColumn();
+      const rowRange = sheet.getRange(activeRowIndex, 1, 1, lastCol);
+      
+      if (action === 'Publicar') {
+        rowRange.setBackground(COLOR_PUBLISHED);          // Verde
+        savePublicationSnapshot(activeRowIndex, carData); // Guardar snapshot
+      } else if (action === 'Eliminar') {
+        rowRange.setBackground(COLOR_ELIMINATED);         // Rojo muy tenue
+        removePublicationSnapshot(activeRowIndex);        // Borrar snapshot
+      }
+      
     } else {
       SpreadsheetApp.getUi().alert('Error', 'Error del servidor (Código: ' + responseCode + '). Detalle: ' + response.getContentText(), SpreadsheetApp.getUi().ButtonSet.OK);
     }
   } catch (error) {
     SpreadsheetApp.getUi().alert('Error de Conexión', 'No se conectó con n8n. ' + error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+// =========================================================
+// GESTIÓN DE PUBLICACIONES Y DETECCIÓN DE CAMBIOS
+// =========================================================
+
+/**
+ * Obtiene (o crea y oculta) la hoja "Publicaciones".
+ */
+function getOrCreatePublicationsSheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let pubSheet = getSheetCaseInsensitive(spreadsheet, SHEET_PUBLICACIONES_NAME);
+  
+  if (!pubSheet) {
+    pubSheet = spreadsheet.insertSheet(SHEET_PUBLICACIONES_NAME);
+    const headerRow = ['fila', 'patente', 'descripcion_corta', 'fecha_publicacion'].concat(SNAPSHOT_FIELD_KEYS);
+    pubSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]);
+    pubSheet.hideSheet();
+  }
+  
+  return pubSheet;
+}
+
+/**
+ * Guarda (o actualiza) el snapshot de los campos críticos al publicar.
+ */
+function savePublicationSnapshot(rowIndex, carData) {
+  const pubSheet = getOrCreatePublicationsSheet();
+  const data = pubSheet.getDataRange().getValues();
+  
+  const patente         = (carData['patente'] || carData['dominio'] || '').toString().trim();
+  const descripcionCorta = ((carData['marca'] || '') + ' ' + (carData['modelo'] || '')).trim();
+  const snapshotValues   = SNAPSHOT_FIELD_KEYS.map(k => (carData[k] || '').toString().trim());
+  const newRow           = [rowIndex, patente, descripcionCorta, new Date()].concat(snapshotValues);
+  
+  // Buscar si ya existe una entrada para esta fila
+  let existingRowNum = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] == rowIndex) { existingRowNum = i + 1; break; }
+  }
+  
+  if (existingRowNum > 0) {
+    pubSheet.getRange(existingRowNum, 1, 1, newRow.length).setValues([newRow]);
+  } else {
+    pubSheet.appendRow(newRow);
+  }
+}
+
+/**
+ * Elimina el snapshot de una fila al dar de baja la publicación.
+ */
+function removePublicationSnapshot(rowIndex) {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const pubSheet    = getSheetCaseInsensitive(spreadsheet, SHEET_PUBLICACIONES_NAME);
+  if (!pubSheet) return;
+  
+  const data = pubSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] == rowIndex) {
+      pubSheet.deleteRow(i + 1);
+      return;
+    }
+  }
+}
+
+/**
+ * Compara los valores actuales de una fila con su snapshot.
+ * Devuelve true si hay diferencias (publicación desactualizada).
+ */
+function isRowOutdated(sheet, rowIndex, headers, pubData) {
+  let snapshotRow = null;
+  for (let i = 1; i < pubData.length; i++) {
+    if (pubData[i][0] == rowIndex) { snapshotRow = pubData[i]; break; }
+  }
+  if (!snapshotRow) return false; // No publicado → no aplica
+  
+  const currentValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  // Mapa clave → valor actual
+  const currentMap = {};
+  headers.forEach((h, i) => {
+    if (h) {
+      const key = h.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+      currentMap[key] = (currentValues[i] || '').toString().trim();
+    }
+  });
+  
+  // Comparar campo a campo contra el snapshot (columnas 4+ en pubSheet)
+  for (let k = 0; k < SNAPSHOT_FIELD_KEYS.length; k++) {
+    const snapshotValue = (snapshotRow[4 + k] || '').toString().trim();
+    const currentValue  = currentMap[SNAPSHOT_FIELD_KEYS[k]] || '';
+    if (snapshotValue !== currentValue) return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Función de menú: recorre todas las filas publicadas y marca las desactualizadas de naranja.
+ */
+function checkOutdatedPublications() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet       = spreadsheet.getSheets()[0];
+  const pubSheet    = getSheetCaseInsensitive(spreadsheet, SHEET_PUBLICACIONES_NAME);
+  
+  if (!pubSheet) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('No hay publicaciones registradas aún.', 'Verificación', 4);
+    return;
+  }
+  
+  const data     = sheet.getDataRange().getValues();
+  const headers  = data[0];
+  const pubData  = pubSheet.getDataRange().getValues();
+  
+  // Construir set de filas publicadas
+  const publishedRows = new Set();
+  for (let i = 1; i < pubData.length; i++) {
+    publishedRows.add(parseInt(pubData[i][0]));
+  }
+  
+  let outdatedCount = 0;
+  
+  for (let i = 1; i < data.length; i++) {
+    const rowIndex = i + 1;
+    if (!publishedRows.has(rowIndex)) continue;
+    
+    const rowRange = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
+    if (isRowOutdated(sheet, rowIndex, headers, pubData)) {
+      rowRange.setBackground(COLOR_OUTDATED);
+      outdatedCount++;
+    } else {
+      rowRange.setBackground(COLOR_PUBLISHED); // Sigue al día
+    }
+  }
+  
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    `Verificación completa. ${outdatedCount} publicación(es) desactualizada(s).`,
+    'Verificación', 5
+  );
+}
+
+/**
+ * Trigger simple onEdit — detecta cambios en filas publicadas y actualiza el color en tiempo real.
+ * Pinta naranja si hay diferencias respecto al snapshot, verde si está al día.
+ */
+function onEdit(e) {
+  if (!e) return;
+  
+  const sheet = e.source.getActiveSheet();
+  // Solo procesar la primera hoja (hoja de stock principal)
+  if (sheet.getIndex() !== 1) return;
+  
+  const rowIndex = e.range.getRow();
+  if (rowIndex <= 1) return; // Ignorar cabeceras
+  
+  const pubSheet = getSheetCaseInsensitive(e.source, SHEET_PUBLICACIONES_NAME);
+  if (!pubSheet) return;
+  
+  const pubData = pubSheet.getDataRange().getValues();
+  
+  // Verificar si esta fila tiene snapshot de publicación
+  let isPublished = false;
+  for (let i = 1; i < pubData.length; i++) {
+    if (pubData[i][0] == rowIndex) { isPublished = true; break; }
+  }
+  if (!isPublished) return;
+  
+  const headers  = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const rowRange = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
+  
+  if (isRowOutdated(sheet, rowIndex, headers, pubData)) {
+    rowRange.setBackground(COLOR_OUTDATED);  // 🟡 Naranja — desactualizado
+  } else {
+    rowRange.setBackground(COLOR_PUBLISHED); // 🟢 Verde — al día con la publicación
   }
 }
