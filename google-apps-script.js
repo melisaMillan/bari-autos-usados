@@ -28,8 +28,6 @@ function onOpen() {
       .addSeparator()
       .addItem('🌐 Publicar en redes', 'publishActiveRow')
       .addItem('❌ Eliminar publicación', 'deleteActiveRow')
-      .addSeparator()
-      .addItem('🔍 Verificar publicaciones desactualizadas', 'checkOutdatedPublications')
       .addToUi();
 }
 
@@ -382,16 +380,6 @@ function sendRowToN8n(action) {
       carData[key] = rowValues[index];
     }
   });
-
-  // ── Validación: combustible obligatorio ──────────────────────────────────
-  const combustibleValue = (carData['combustible'] || '').toString().trim();
-  if (!combustibleValue) {
-    return SpreadsheetApp.getUi().alert(
-      '⚠️ Campo Requerido',
-      'El campo "Combustible" es obligatorio y no está completado en esta fila.\n\nPor favor completalo en la planilla antes de publicar.',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-  }
 
   const payload = { action: action, rowIndex: activeRowIndex, timestamp: new Date().toISOString(), car: carData };
   SpreadsheetApp.getActiveSpreadsheet().toast('Enviando datos a n8n...', 'Integración', 5);
