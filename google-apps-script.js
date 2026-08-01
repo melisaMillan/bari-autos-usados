@@ -183,6 +183,26 @@ function sendRowToN8n(action) {
     }
   });
 
+  // Validaciones antes de Publicar
+  if (action === 'Publicar') {
+    const publicarVal = (carData['publicar'] || '').toString().trim().toUpperCase();
+    const precio      = parseFloat(carData['precio_final_en_ars']) || 0;
+    const urlFotos    = (carData['url_fotos_drive'] || '').toString().trim();
+
+    if (publicarVal !== 'SI') {
+      SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'La columna "Publicar" debe estar en "SI".\nPrimero cambiá el valor a SI.', SpreadsheetApp.getUi().ButtonSet.OK);
+      return;
+    }
+    if (precio <= 0) {
+      SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'El vehículo debe tener un "Precio final en ARS" cargado para poder publicarse.', SpreadsheetApp.getUi().ButtonSet.OK);
+      return;
+    }
+    if (urlFotos === '') {
+      SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'El vehículo debe tener una "URL Fotos Drive" cargada para poder publicarse.', SpreadsheetApp.getUi().ButtonSet.OK);
+      return;
+    }
+  }
+
   // Leer IDs existentes desde la hoja 'Publicaciones' (id_meli, id_fb, id_ig)
   const pubSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publicaciones');
   if (pubSheet) {
@@ -214,10 +234,10 @@ function sendRowToN8n(action) {
       const rowRange = sheet.getRange(row, 1, 1, sheet.getLastColumn());
       if (action === 'Publicar') {
         rowRange.setBackground(COLOR_PUBLISHED);
-        savePublicationSnapshot(row, carData);   // Guardar snapshot
+        savePublicationSnapshot(carData);        // Guardar snapshot por dominio
       } else if (action === 'Eliminar') {
         rowRange.setBackground(COLOR_ELIMINATED);
-        removePublicationSnapshot(row);          // Borrar snapshot
+        removePublicationSnapshot(carData['dominio']); // Borrar snapshot por dominio
       }
       SpreadsheetApp.getActiveSpreadsheet().toast('✅ ¡Operación exitosa!', 'n8n', 4);
     } else {
@@ -244,17 +264,22 @@ function getOrCreateSnapshotsSheet() {
   return snap;
 }
 
-function savePublicationSnapshot(rowIndex, carData) {
+function savePublicationSnapshot(carData) {
   const snap   = getOrCreateSnapshotsSheet();
   const data   = snap.getDataRange().getValues();
-  const dominio = (carData['dominio'] || '').toString().trim();
+  const dominio = (carData['dominio'] || '').toString().trim().toUpperCase();
+  if (!dominio) return; // No se puede rastrear sin patente
+  
   const desc    = ((carData['marca'] || '') + ' ' + (carData['modelo'] || '')).trim();
   const valores = SNAPSHOT_FIELD_KEYS.map(k => (carData[k] || '').toString().trim());
-  const newRow  = [rowIndex, dominio, desc, new Date()].concat(valores);
+  const newRow  = ['-', dominio, desc, new Date()].concat(valores); // La fila 0 ya no importa el rowIndex
 
   let existingNum = -1;
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] == rowIndex) { existingNum = i + 1; break; }
+    if (data[i][1].toString().trim().toUpperCase() === dominio) { 
+      existingNum = i + 1; 
+      break; 
+    }
   }
 
   if (existingNum > 0) {
@@ -264,12 +289,17 @@ function savePublicationSnapshot(rowIndex, carData) {
   }
 }
 
-function removePublicationSnapshot(rowIndex) {
+function removePublicationSnapshot(dominio) {
+  if (!dominio) return;
+  dominio = dominio.toString().trim().toUpperCase();
   const snap = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SNAPSHOTS_NAME);
   if (!snap) return;
   const data = snap.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] == rowIndex) { snap.deleteRow(i + 1); return; }
+    if (data[i][1].toString().trim().toUpperCase() === dominio) { 
+      snap.deleteRow(i + 1); 
+      return; 
+    }
   }
 }
 
@@ -279,17 +309,23 @@ function removePublicationSnapshot(rowIndex) {
 // =====================================================
 
 function isRowOutdated(sheet, rowIndex, headersMap, snapData) {
-  let snapshotRow = null;
-  for (let i = 1; i < snapData.length; i++) {
-    if (snapData[i][0] == rowIndex) { snapshotRow = snapData[i]; break; }
-  }
-  if (!snapshotRow) return false;
-
   const currentValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
   const currentMap = {};
   Object.keys(headersMap).forEach(key => {
     currentMap[key] = (currentValues[headersMap[key] - 1] || '').toString().trim();
   });
+  
+  const dominio = (currentMap['dominio'] || '').toUpperCase();
+  if (!dominio) return false;
+
+  let snapshotRow = null;
+  for (let i = 1; i < snapData.length; i++) {
+    if (snapData[i][1].toString().trim().toUpperCase() === dominio) { 
+      snapshotRow = snapData[i]; 
+      break; 
+    }
+  }
+  if (!snapshotRow) return false;
 
   for (let k = 0; k < SNAPSHOT_FIELD_KEYS.length; k++) {
     const snapVal = (snapshotRow[4 + k] || '').toString().trim();
@@ -309,7 +345,12 @@ function onEdit(e) {
   if (sheet.getName() !== 'Stock') return; // Solo monitorear la hoja Stock
 
   const rowIndex = e.range.getRow();
-  if (rowIndex <= 1) return; // Ignorar cabeceras
+  const headersMap = getHeadersMap(sheet);
+  const colDominio = headersMap['dominio'];
+  if (!colDominio) return;
+  
+  const dominio = sheet.getRange(rowIndex, colDominio).getValue().toString().trim().toUpperCase();
+  if (!dominio) return;
 
   const snap = e.source.getSheetByName(SHEET_SNAPSHOTS_NAME);
   if (!snap) return;
@@ -317,7 +358,10 @@ function onEdit(e) {
   const snapData = snap.getDataRange().getValues();
   let isPublished = false;
   for (let i = 1; i < snapData.length; i++) {
-    if (snapData[i][0] == rowIndex) { isPublished = true; break; }
+    if (snapData[i][1].toString().trim().toUpperCase() === dominio) { 
+      isPublished = true; 
+      break; 
+    }
   }
   if (!isPublished) return;
 
@@ -409,7 +453,26 @@ function deleteSelectedRow() {
   var domCol    = headersMap['dominio'] || 0;
   var marca  = sheet.getRange(row, marcaCol).getValue();
   var modelo = sheet.getRange(row, modeloCol).getValue();
-  var dominio = domCol ? sheet.getRange(row, domCol).getValue() : '';
+  var dominio = domCol ? sheet.getRange(row, domCol).getValue().toString().trim().toUpperCase() : '';
+  
+  if (!dominio) {
+    ui.alert('⚠️ Esta fila no tiene dominio/patente válido.');
+    return;
+  }
+
+  // Verificar si está publicado en redes (tiene snapshot) buscando por dominio
+  var snap = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SNAPSHOTS_NAME);
+  if (snap) {
+    var snapData = snap.getDataRange().getValues();
+    for (var i = 1; i < snapData.length; i++) {
+      if (snapData[i][1].toString().trim().toUpperCase() === dominio) {
+        ui.alert('🚫 No se puede eliminar', 'Este vehículo está publicado en redes.\nPrimero eliminalo de redes usando "❌ Eliminar de redes" y luego intentá de nuevo.', ui.ButtonSet.OK);
+        return;
+      }
+    }
+  }
+
+  // Confirmar con el usuario
   var resp = ui.alert(
     '¿Eliminar fila?',
     'Vas a borrar de forma permanente la fila ' + row + ':\n' + marca + ' ' + modelo + ' (' + dominio + ')\n\n¿Estás seguro?',
@@ -418,15 +481,6 @@ function deleteSelectedRow() {
   if (resp !== ui.Button.YES) return;
 
   sheet.deleteRow(row);
-  // Actualizar índices de snapshots que quedaron por debajo
-  if (snap) {
-    var snapData2 = snap.getDataRange().getValues();
-    for (var j = 1; j < snapData2.length; j++) {
-      if (snapData2[j][0] > row) {
-        snap.getRange(j + 1, 1).setValue(snapData2[j][0] - 1);
-      }
-    }
-  }
   ui.alert('✅ Fila eliminada correctamente.');
 }
 
