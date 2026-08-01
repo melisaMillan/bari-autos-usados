@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #2c3e50;
+      padding-bottom: 80px;
+    }
+    
+    .top-header {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .top-header small {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+    
+    .section {
+      margin: 10px 10px 0;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .section-header {
+      background: #e8eaf6;
+      color: #1a237e;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid #c5cae9;
+    }
+    .section-body { padding: 12px 14px; }
+    .field { margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #546e7a;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .field label .req { color: #e53935; margin-left: 2px; }
+    
+    select, input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cfd8dc;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #2c3e50;
+      background: white;
+      transition: border-color 0.15s;
+    }
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: #3949ab;
+      box-shadow: 0 0 0 2px rgba(57,73,171,0.15);
+    }
+    select:disabled, input:disabled {
+      background: #eceff1;
+      color: #90a4ae;
+      cursor: not-allowed;
+    }
+    textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+    
+    .row-2 { display: flex; gap: 8px; }
+    .row-2 .field { flex: 1; }
+    
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 12px 10px;
+      border-top: 2px solid #e8eaf6;
+      z-index: 100;
+    }
+    .btn-save {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #1b5e20, #2e7d32);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s;
+    }
+    .btn-save:hover:not(:disabled) { opacity: 0.9; }
+    .btn-save:disabled { background: #b0bec5; cursor: not-allowed; }
+    
+    #statusMsg {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 6px;
+      min-height: 16px;
+    }
+    
+    .loading-text { color: #90a4ae; font-style: italic; font-size: 12px; padding: 6px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="top-header">
+    🚗 Carga de Vehículo
+    <small>Se guardará en la primera fila disponible</small>
+  </div>
+
+  <!-- SECCIÓN 1: Datos ML -->
+  <div class="section">
+    <div class="section-header">🌐 Datos del vehículo (Mercado Libre)</div>
+    <div class="section-body">
+      
+      <div class="field">
+        <label>Segmento <span class="req">*</span></label>
+        <select id="segmento">
+          <option value="">-- Seleccionar --</option>
+          <option value="Automóvil">Automóvil</option>
+          <option value="SUV">SUV</option>
+          <option value="Pickup">Pickup</option>
+          <option value="Utilitario">Utilitario</option>
+          <option value="Camión">Camión</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Marca <span class="req">*</span></label>
+        <select id="brand" disabled><option>Seleccioná segmento...</option></select>
+      </div>
+
+      <div class="field" id="modelContainer">
+        <label>Modelo <span class="req">*</span></label>
+        <select id="model" disabled><option>Seleccioná marca...</option></select>
+      </div>
+
+      <div class="field" id="trimContainer">
+        <label>Versión <span class="req">*</span></label>
+        <select id="trim" disabled><option>Seleccioná modelo...</option></select>
+      </div>
+
+      <div class="row-2">
+        <div class="field" id="yearContainer">
+          <label>Año <span class="req">*</span></label>
+          <select id="year" disabled><option>-</option></select>
+        </div>
+        <div class="field" id="doorContainer">
+          <label>Puertas <span class="req">*</span></label>
+          <select id="door" disabled><option>-</option></select>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field" id="colorContainer">
+          <label>Color</label>
+          <select id="color" disabled><option>-</option></select>
+        </div>
+        <div class="field" id="transContainer">
+          <label>Transmisión</label>
+          <select id="transmision" disabled><option>-</option></select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: Ficha técnica -->
+  <div class="section">
+    <div class="section-header">📋 Ficha técnica</div>
+    <div class="section-body">
+      
+      <div class="field">
+        <label>Dominio / Patente <span class="req">*</span></label>
+        <input type="text" id="dominio" placeholder="Ej: AB 123 CD" style="text-transform:uppercase;">
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>KM <span class="req">*</span></label>
+          <input type="number" id="km" placeholder="Ej: 45000" min="0">
+        </div>
+        <div class="field">
+          <label>Combustible <span class="req">*</span></label>
+          <select id="combustible">
+            <option value="">-- Selec. --</option>
+            <option>Nafta</option>
+            <option>Diesel</option>
+            <option>GNC</option>
+            <option>Eléctrico</option>
+            <option>Híbrido</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3: Comercial -->
+  <div class="section">
+    <div class="section-header">🏢 Información comercial</div>
+    <div class="section-body">
+
+      <div class="row-2">
+        <div class="field">
+          <label>Sucursal <span class="req">*</span></label>
+          <select id="sucursal">
+            <option value="">-- Selec. --</option>
+            <option>Tandil</option>
+            <option>Bahía Blanca</option>
+            <option>Olavarría</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vendedor</label>
+          <!-- Se llena dinámicamente desde la hoja Configuración -->
+          <select id="vendedor">
+            <option value="">Cargando...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Precio final en ARS</label>
+        <!-- Sin asterisco — no es obligatorio -->
+        <input type="number" id="precioFinal" placeholder="Ej: 15000000" min="0">
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Precio básico en ARS</label>
+          <input type="number" id="precioBasico" placeholder="Ej: 12000000">
+        </div>
+        <div class="field">
+          <label>IVA</label>
+          <input type="number" id="iva" placeholder="Ej: 3000000">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Estado <span class="req">*</span></label>
+          <select id="estado">
+            <option value="">-- Selec. --</option>
+            <option>En condiciones</option>
+            <option>En reacondicionamiento</option>
+            <option>Reservado</option>
+            <option>Vendido</option>
+            <option>Sin ingresar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Financiador</label>
+          <select id="financiador">
+            <option value="">-- Selec. --</option>
+            <option>Santander</option>
+            <option>Bari</option>
+            <option>Galicia</option>
+            <option>Nación</option>
+            <option>Provincia</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4: Disponibilidad -->
+  <div class="section">
+    <div class="section-header">📊 Disponibilidad y visibilidad</div>
+    <div class="section-body">
+      <div class="row-2">
+        <div class="field">
+          <label>Disponible</label>
+          <select id="disponible">
+            <option value="">--</option>
+            <option>SI</option>
+            <option>NO</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Publicar</label>
+          <select id="publicar">
+            <option value="NO" selected>NO</option>
+            <option value="SI">SI</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Oportunidad</label>
+          <select id="oportunidad">
+            <option value="">--</option>
+            <option>SI</option>
+            <option>NO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 5: Publicación -->
+  <div class="section">
+    <div class="section-header">📸 Publicación</div>
+    <div class="section-body">
+
+      <div class="field">
+        <label>URL Fotos Drive</label>
+        <input type="text" id="urlFotos" placeholder="https://drive.google.com/drive/folders/...">
+      </div>
+
+      <div class="field">
+        <label>URL Foto Miniatura</label>
+        <input type="text" id="urlMiniatura" placeholder="https://drive.google.com/file/d/...">
+      </div>
+
+      <div class="field">
+        <label>Descripción para publicación</label>
+        <textarea id="descripcion" placeholder="Descripción del vehículo para Mercado Libre..."></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN 6: Observaciones -->
+  <div class="section">
+    <div class="section-header">💬 Observaciones internas</div>
+    <div class="section-body">
+      <div class="field">
+        <label>Comentario interno</label>
+        <textarea id="comentario" placeholder="Notas internas del vehículo..." style="min-height:50px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER FIJO -->
+  <div class="footer">
+    <button class="btn-save" id="btnGuardar">💾 Guardar Vehículo</button>
+    <div id="statusMsg"></div>
+  </div>
+
+  <script>
+    var webhookUrl = 'https://bipolos.app.n8n.cloud/webhook/modelos-ml';
+    
+    // --- 1. VARIABLES DOM ---
+    var segSel = document.getElementById('segmento');
+    var brandSel = document.getElementById('brand');
+    var modelContainer = document.getElementById('modelContainer');
+    var trimContainer = document.getElementById('trimContainer');
+    var yearContainer = document.getElementById('yearContainer');
+    var doorContainer = document.getElementById('doorContainer');
+    var colorContainer = document.getElementById('colorContainer');
+    var transContainer = document.getElementById('transContainer');
+    var btnGuardar = document.getElementById('btnGuardar');
+    var statusMsg = document.getElementById('statusMsg');
+    var precioFinalInput = document.getElementById('precioFinal');
+    var publicarSelect = document.getElementById('publicar');
+
+    // --- 2. CARGA DINÁMICA DE VENDEDORES ---
+    // Al abrir el sidebar, pedimos la lista desde la hoja "Configuración"
+    google.script.run.withSuccessHandler(function(vendedores) {
+      var sel = document.getElementById('vendedor');
+      if (!vendedores || vendedores.length === 0) {
+        sel.innerHTML = '<option value="">-- Sin datos --</option>';
+        return;
+      }
+      var opts = '<option value="">-- Selec. --</option>';
+      for (var i = 0; i < vendedores.length; i++) {
+        opts += '<option>' + vendedores[i] + '</option>';
+      }
+      sel.innerHTML = opts;
+    }).withFailureHandler(function() {
+      document.getElementById('vendedor').innerHTML = '<option value="">-- Error al cargar --</option>';
+    }).getVendedores();
+
+    // --- 3. REGLA: Si no hay precio, forzar Publicar = NO ---
+    precioFinalInput.addEventListener('input', function() {
+      if (!this.value || parseFloat(this.value) <= 0) {
+        publicarSelect.value = 'NO';
+      }
+    });
+
+    // --- 4. HELPERS Y RESETEOS ---
+    function getDomain(segmento) {
+      if (segmento === 'Camión' || segmento === 'Utilitario') return 'MLA-TRUCKS';
+      return 'MLA-CARS_AND_VANS';
+    }
+
+    function resetDespuesDeSegmento() {
+      brandSel.innerHTML = '<option>Seleccioná segmento...</option>';
+      brandSel.disabled = true;
+      resetDesdeMarca();
+    }
+
+    function resetDesdeMarca() {
+      modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><select id="model" disabled><option>Seleccioná marca...</option></select>';
+      resetDesdeModelo();
+    }
+
+    function resetDesdeModelo() {
+      trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim" disabled><option>Seleccioná modelo...</option></select>';
+      resetExtras();
+    }
+
+    function resetExtras() {
+      yearContainer.innerHTML = '<label>Año <span class="req">*</span></label><select id="year" disabled><option>-</option></select>';
+      doorContainer.innerHTML = '<label>Puertas <span class="req">*</span></label><select id="door" disabled><option>-</option></select>';
+      colorContainer.innerHTML = '<label>Color</label><select id="color" disabled><option>-</option></select>';
+      transContainer.innerHTML = '<label>Transmisión</label><select id="transmision" disabled><option>-</option></select>';
+    }
+
+    // --- 5. CARGA EN CASCADA ---
+
+    // A) Al cambiar el segmento → Carga Marcas
+    segSel.addEventListener('change', function() {
+      var seg = segSel.value;
+      if (!seg) { resetDespuesDeSegmento(); return; }
+      resetDespuesDeSegmento();
+
+      var domain = getDomain(seg);
+      var category = (domain === 'MLA-TRUCKS') ? 'MLA58254' : 'MLA1744';
+      var url = webhookUrl + '?type=brands&domain=' + domain + '&category=' + category;
+
+      brandSel.innerHTML = '<option class="loading-text">Cargando marcas...</option>';
+      google.script.run.withSuccessHandler(function(data) {
+        if (!data || data.error || data.length === 0) {
+          brandSel.innerHTML = '<option value="">Error, intentá de nuevo</option>';
+          brandSel.disabled = false;
+          return;
+        }
+        var opts = '<option value="">-- Seleccionar Marca --</option>';
+        var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
+        for (var i = 0; i < sorted.length; i++) {
+          opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
+        }
+        brandSel.innerHTML = opts;
+        brandSel.disabled = false;
+      }).fetchN8nWebhook(url);
+    });
+
+    // B) Al cambiar la marca → Carga Modelos
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id === 'brand') {
+        var brandId = e.target.value;
+        if (!brandId) { resetDesdeMarca(); return; }
+        resetDesdeModelo();
+
+        var domain = getDomain(segSel.value);
+        var url = webhookUrl + '?type=models&domain=' + domain + '&brand=' + brandId;
+
+        modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><select id="model" disabled><option>Buscando modelos...</option></select>';
+        google.script.run.withSuccessHandler(function(data) {
+          if (!data || data.error || data.length === 0) {
+            modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><input type="text" id="model" placeholder="Escribí el modelo">';
+            return;
+          }
+          var opts = '<option value="">-- Seleccionar Modelo --</option>';
+          var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
+          for (var i = 0; i < sorted.length; i++) {
+            opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
+          }
+          modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><select id="model">' + opts + '</select>';
+        }).fetchN8nWebhook(url);
+      }
+    });
+
+    // C) Al cambiar el modelo → Carga Versiones
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id === 'model') {
+        var modelEl = document.getElementById('model');
+        var modelId = modelEl.value;
+        if (!modelId) { resetDesdeModelo(); return; }
+        resetExtras();
+
+        var domain = getDomain(segSel.value);
+        var brandId = document.getElementById('brand').value;
+        var url = webhookUrl + '?type=trims&domain=' + domain + '&brand=' + brandId + '&model=' + modelId;
+
+        trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim" disabled><option>Buscando versiones...</option></select>';
+        google.script.run.withSuccessHandler(function(data) {
+          if (!data || data.error || data.length === 0) {
+            trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><input type="text" id="trim" placeholder="Escribí la versión">';
+            return;
+          }
+          var opts = '<option value="">-- Seleccionar Versión --</option>';
+          var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
+          for (var i = 0; i < sorted.length; i++) {
+            opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
+          }
+          trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim">' + opts + '</select>';
+        }).fetchN8nWebhook(url);
+      }
+    });
+
+    // D) Al cambiar la versión → Carga Extras
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id === 'trim') {
+        var trimEl = document.getElementById('trim');
+        var trimId = trimEl.value;
+        if (!trimId) { resetExtras(); return; }
+
+        var domain = getDomain(segSel.value);
+        var brandId = document.getElementById('brand').value;
+        var modelId = document.getElementById('model').value;
+        var baseParams = '&domain=' + domain + '&brand=' + brandId + '&model=' + modelId + '&trim=' + trimId;
+
+        loadExtra('VEHICLE_YEAR', 'yearContainer', 'year', '<label>Año <span class="req">*</span></label>', 'Ej: 2020', baseParams);
+        loadExtra('DOORS', 'doorContainer', 'door', '<label>Puertas <span class="req">*</span></label>', 'N° puertas', baseParams);
+        loadExtra('COLOR', 'colorContainer', 'color', '<label>Color</label>', 'Color', baseParams);
+        loadExtra('TRANSMISSION', 'transContainer', 'transmision', '<label>Transmisión</label>', 'Tipo transmisión', baseParams);
+      }
+    });
+
+    function loadExtra(attributeId, containerId, selectId, labelHtml, placeholder, baseParams) {
+      var container = document.getElementById(containerId);
+      container.innerHTML = labelHtml + '<select id="' + selectId + '" disabled><option>...</option></select>';
+      var url = webhookUrl + '?type=extra&attribute=' + attributeId + baseParams;
+      google.script.run.withSuccessHandler(function(data) {
+        if (!data || data.error || data.length === 0 || data.status === 500) {
+          container.innerHTML = labelHtml + '<input type="text" id="' + selectId + '" placeholder="' + placeholder + '">';
+          return;
+        }
+        var opts = '<option value="">-- Elegir --</option>';
+        var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
+        for (var i = 0; i < sorted.length; i++) {
+          opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
+        }
+        container.innerHTML = labelHtml + '<select id="' + selectId + '">' + opts + '</select>';
+      }).fetchN8nWebhook(url);
+    }
+
+    // --- 6. GUARDAR VEHÍCULO ---
+
+    function getVal(id) {
+      var el = document.getElementById(id);
+      if (!el) return '';
+      if (el.tagName === 'SELECT') {
+        return el.value ? el.options[el.selectedIndex].text : '';
+      }
+      return el.value ? el.value.trim() : '';
+    }
+
+    function getValId(id) {
+      var el = document.getElementById(id);
+      if (!el) return '';
+      return el.value ? el.value.trim() : '';
+    }
+
+    btnGuardar.addEventListener('click', function() {
+      var errores = [];
+      if (!segSel.value)                                        errores.push('Segmento');
+      if (!getValId('brand'))                                   errores.push('Marca');
+      if (!getVal('model'))                                     errores.push('Modelo');
+      if (!getVal('trim'))                                      errores.push('Versión');
+      if (!getVal('year'))                                      errores.push('Año');
+      if (!getVal('door'))                                      errores.push('Puertas');
+      if (!document.getElementById('dominio').value.trim())    errores.push('Dominio / Patente');
+      if (!document.getElementById('km').value)                errores.push('KM');
+      if (!document.getElementById('sucursal').value)          errores.push('Sucursal');
+      if (!document.getElementById('estado').value)            errores.push('Estado');
+      if (!document.getElementById('combustible').value)       errores.push('Combustible');
+
+      if (errores.length > 0) {
+        statusMsg.innerHTML = '<span style="color:#c62828">⚠️ Faltan: ' + errores.join(', ') + '</span>';
+        return;
+      }
+
+      // Si no hay precio, forzar Publicar = NO también desde el front
+      var precio = document.getElementById('precioFinal').value;
+      var publicarVal = (!precio || parseFloat(precio) <= 0) ? 'NO' : publicarSelect.value;
+
+      var data = {
+        segmento:    segSel.value,
+        marca:       getVal('brand'),
+        modelo:      getVal('model'),
+        version:     getVal('trim'),
+        anio:        getVal('year'),
+        puertas:     getVal('door'),
+        color:       getVal('color'),
+        transmision: getVal('transmision'),
+        dominio:     document.getElementById('dominio').value.trim().toUpperCase(),
+        km:          document.getElementById('km').value,
+        combustible: document.getElementById('combustible').value,
+        sucursal:    document.getElementById('sucursal').value,
+        vendedor:    document.getElementById('vendedor').value,
+        precioFinal: precio,
+        precioBasico: document.getElementById('precioBasico').value,
+        iva:          document.getElementById('iva').value,
+        estado:       document.getElementById('estado').value,
+        financiador:  document.getElementById('financiador').value,
+        disponible:   document.getElementById('disponible').value,
+        publicar:     publicarVal,
+        oportunidad:  document.getElementById('oportunidad').value,
+        urlFotos:     document.getElementById('urlFotos').value.trim(),
+        urlMiniatura: document.getElementById('urlMiniatura').value.trim(),
+        descripcion:  document.getElementById('descripcion').value.trim(),
+        comentario:   document.getElementById('comentario').value.trim()
+      };
+
+      statusMsg.innerHTML = '<span style="color:#1565c0">⏳ Guardando...</span>';
+      btnGuardar.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res.success) {
+            statusMsg.innerHTML = '<span style="color:#2e7d32">' + res.message + '</span>';
+            setTimeout(function() {
+              segSel.value = '';
+              resetDespuesDeSegmento();
+              ['dominio','km','combustible','sucursal','precioFinal','precioBasico',
+               'iva','estado','financiador','disponible','oportunidad',
+               'urlFotos','urlMiniatura','descripcion','comentario'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.value = '';
+              });
+              publicarSelect.value = 'NO'; // Volver al default
+              document.getElementById('vendedor').value = '';
+              statusMsg.innerHTML = '';
+            }, 2500);
+          } else {
+            statusMsg.innerHTML = '<span style="color:#c62828">' + res.message + '</span>';
+          }
+          btnGuardar.disabled = false;
+        })
+        .withFailureHandler(function(err) {
+          statusMsg.innerHTML = '<span style="color:#c62828">❌ Error GAS: ' + err.message + '</span>';
+          btnGuardar.disabled = false;
+        })
+        .writeNewVehicle(data);
+    });
+  </script>
+</body>
+</html>

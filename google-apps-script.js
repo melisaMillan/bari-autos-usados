@@ -34,6 +34,8 @@ function onOpen() {
     .addItem('⚡ Publicar / Actualizar en redes', 'publishActiveRow')
     .addItem('❌ Eliminar de redes', 'deleteActiveRow')
     .addSeparator()
+    .addItem('🗑️ Eliminar Fila de Stock', 'deleteSelectedRow')
+    .addSeparator()
     .addItem('🔓 Forzar Liberación de Reserva', 'forceProcessRelease')
     .addToUi();
 }
@@ -340,6 +342,95 @@ function openMeliSidebar() {
 }
 
 // =====================================================
+// VENDEDORES DINÁMICOS: Leer desde hoja "Configuración"
+// El sidebar llama esta función para poblar el select.
+// Se espera una columna "Vendedores" en esa hoja.
+// =====================================================
+function getVendedores() {
+  try {
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Configuración') || ss.getSheetByName('Configuracion');
+    if (!sheet) return [];
+    var data = sheet.getDataRange().getValues();
+    // Buscar la columna llamada "Vendedores" en la fila 1
+    var col = -1;
+    for (var c = 0; c < data[0].length; c++) {
+      if (data[0][c].toString().trim().toLowerCase() === 'vendedores') {
+        col = c;
+        break;
+      }
+    }
+    if (col === -1) return [];
+    var vendedores = [];
+    for (var r = 1; r < data.length; r++) {
+      var nombre = data[r][col].toString().trim();
+      if (nombre) vendedores.push(nombre);
+    }
+    return vendedores;
+  } catch (e) {
+    return [];
+  }
+}
+
+// =====================================================
+// ELIMINAR FILA DE STOCK (con protección)
+// Solo permite borrar si el vehículo NO está publicado
+// en redes (es decir, si no tiene snapshot activo).
+// =====================================================
+function deleteSelectedRow() {
+  var ui    = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSheet();
+  if (sheet.getName() !== 'Stock') {
+    ui.alert('⚠️ Posicioná el cursor en la hoja Stock antes de eliminar.');
+    return;
+  }
+  var row = sheet.getActiveCell().getRow();
+  if (row <= 1) {
+    ui.alert('⚠️ Seleccioná la fila del vehículo a eliminar (no la cabecera).');
+    return;
+  }
+
+  // Verificar si está publicado en redes (tiene snapshot)
+  var snap = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SNAPSHOTS_NAME);
+  if (snap) {
+    var snapData = snap.getDataRange().getValues();
+    for (var i = 1; i < snapData.length; i++) {
+      if (snapData[i][0] == row) {
+        ui.alert('🚫 No se puede eliminar', 'Este vehículo está publicado en redes.\nPrimero eliminalo de redes usando "❌ Eliminar de redes" y luego intentá de nuevo.', ui.ButtonSet.OK);
+        return;
+      }
+    }
+  }
+
+  // Confirmar con el usuario
+  var headersMap = getHeadersMap(sheet);
+  var marcaCol  = headersMap['marca']  || 2;
+  var modeloCol = headersMap['modelo'] || 3;
+  var domCol    = headersMap['dominio'] || 0;
+  var marca  = sheet.getRange(row, marcaCol).getValue();
+  var modelo = sheet.getRange(row, modeloCol).getValue();
+  var dominio = domCol ? sheet.getRange(row, domCol).getValue() : '';
+  var resp = ui.alert(
+    '¿Eliminar fila?',
+    'Vas a borrar de forma permanente la fila ' + row + ':\n' + marca + ' ' + modelo + ' (' + dominio + ')\n\n¿Estás seguro?',
+    ui.ButtonSet.YES_NO
+  );
+  if (resp !== ui.Button.YES) return;
+
+  sheet.deleteRow(row);
+  // Actualizar índices de snapshots que quedaron por debajo
+  if (snap) {
+    var snapData2 = snap.getDataRange().getValues();
+    for (var j = 1; j < snapData2.length; j++) {
+      if (snapData2[j][0] > row) {
+        snap.getRange(j + 1, 1).setValue(snapData2[j][0] - 1);
+      }
+    }
+  }
+  ui.alert('✅ Fila eliminada correctamente.');
+}
+
+// =====================================================
 // PROXY SEGURO HACIA N8N (sin CORS, llamado desde sidebar)
 // =====================================================
 function fetchN8nWebhook(url) {
@@ -418,15 +509,18 @@ function writeNewVehicle(data) {
     setVal('sucursal',          data.sucursal);
     setVal('vendedor',          data.vendedor);
     setVal('fecha_toma',        new Date());
-    setVal('precio_final_en_ars',  data.precioFinal  ? parseFloat(data.precioFinal.toString().replace(/\./g, '').replace(',', '.'))  : '');
+    var precioFinalVal = data.precioFinal ? parseFloat(data.precioFinal.toString().replace(/\./g, '').replace(',', '.')) : null;
+    if (precioFinalVal) setVal('precio_final_en_ars', precioFinalVal);
     setVal('precio_basico_en_ars', data.precioBasico ? parseFloat(data.precioBasico.toString().replace(/\./g, '').replace(',', '.')) : '');
     setVal('iva',               data.iva ? parseFloat(data.iva.toString().replace(/\./g, '').replace(',', '.')) : '');
     setVal('estado',            data.estado);
     setVal('financiador',       data.financiador);
     
     // --- Disponibilidad ---
+    // Regla: si no tiene precio, Publicar siempre queda en "NO"
+    var publicarVal = (!precioFinalVal) ? 'NO' : (data.publicar || 'NO');
     setVal('disponible',  data.disponible);
-    setVal('publicar',    data.publicar);
+    setVal('publicar',    publicarVal);
     setVal('oportunidad', data.oportunidad);
     
     // --- Publicación ---
@@ -459,9 +553,35 @@ function writeNewVehicle(data) {
       setFormula('precio_financiado', '=IF(' + letraFin + newRow + '="";"";VLOOKUP(' + letraFin + newRow + ';\'FINANCIACIÓN\'!$A$11:$L$17;2;FALSE))*' + letraPrecio + newRow);
     }
     
+    // --- Ordenar Stock por Segmento luego de guardar ---
+    sortStockBySegmento(sheet, map);
+
     return { success: true, message: '✅ Vehículo cargado en fila ' + newRow + '!', row: newRow };
     
   } catch (e) {
     return { success: false, message: '❌ Error: ' + e.message };
+  }
+}
+
+// =====================================================
+// ORDENAR HOJA STOCK POR COLUMNA "SEGMENTO"
+// Ordena desde la fila 2 (respeta cabeceras en fila 1)
+// =====================================================
+function sortStockBySegmento(sheet, map) {
+  try {
+    var colSegmento = map ? map['segmento'] : null;
+    if (!colSegmento) {
+      // Si no recibimos el mapa, lo obtenemos nosotros
+      sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Stock');
+      colSegmento = getHeadersMap(sheet)['segmento'];
+    }
+    if (!colSegmento) return;
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 2) return; // Nada que ordenar
+    var range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    range.sort({ column: colSegmento, ascending: true });
+  } catch (e) {
+    // No interrumpimos el guardado si el sort falla
+    console.error('sortStockBySegmento error: ' + e.message);
   }
 }
