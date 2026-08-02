@@ -492,6 +492,18 @@
         resetExtras();
 
         var domain = getDomain(segSel.value);
+        if (domain === 'MLA-TRUCKS') {
+          // Camiones: Versión, puertas y transmisión no obligatorias/deshabilitadas
+          trimContainer.innerHTML = '<label>Versión</label><select id="trim" disabled><option value="">N/A</option></select>';
+          doorContainer.innerHTML = '<label>Puertas</label><select id="door" disabled><option value="">N/A</option></select>';
+          transContainer.innerHTML = '<label>Transmisión</label><select id="transmision" disabled><option value="">N/A</option></select>';
+          
+          // Año y color: manuales directos
+          fallbackToInput('yearContainer', '<label>Año <span class="req">*</span></label>', 'year', 'Ej: 2020');
+          fallbackToInput('colorContainer', '<label>Color</label>', 'color', 'Color');
+          return;
+        }
+
         var brandId = document.getElementById('brand').value;
         var url = webhookUrl + '?type=trims&domain=' + domain + '&brand=' + brandId + '&model=' + modelId;
 
@@ -567,12 +579,14 @@
 
     btnGuardar.addEventListener('click', function() {
       var errores = [];
+      var isTruck = getDomain(segSel.value) === 'MLA-TRUCKS';
+
       if (!segSel.value)                                        errores.push('Segmento');
       if (!getValId('brand'))                                   errores.push('Marca');
       if (!getVal('model'))                                     errores.push('Modelo');
-      if (!getVal('trim'))                                      errores.push('Versión');
+      if (!getVal('trim') && !isTruck)                          errores.push('Versión');
       if (!getVal('year'))                                      errores.push('Año');
-      if (!getVal('door'))                                      errores.push('Puertas');
+      if (!getVal('door') && !isTruck)                          errores.push('Puertas');
       if (!document.getElementById('dominio').value.trim())    errores.push('Dominio / Patente');
       if (!document.getElementById('km').value)                errores.push('KM');
       if (!document.getElementById('sucursal').value)          errores.push('Sucursal');
