@@ -428,9 +428,25 @@
       transContainer.innerHTML = '<label>Transmisión</label><select id="transmision" disabled><option>-</option></select>';
     }
 
+    function fallbackToInput(containerId, labelHtml, inputId, placeholder) {
+      document.getElementById(containerId).innerHTML = labelHtml + '<input type="text" id="' + inputId + '" placeholder="' + placeholder + '">';
+    }
+
+    function fillCombo(selectId, arrayData, defaultOption) {
+      var selectElement = document.getElementById(selectId);
+      if (!selectElement) return;
+      var opts = '<option value="">' + defaultOption + '</option>';
+      var sorted = arrayData.sort(function(a, b) { return a.name.localeCompare(b.name); });
+      for (var i = 0; i < sorted.length; i++) {
+        opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
+      }
+      selectElement.innerHTML = opts;
+      selectElement.disabled = false;
+    }
+
     // --- 5. CARGA EN CASCADA ---
 
-    // A) Al cambiar el segmento → Carga Marcas
+    // A) Al cambiar el segmento → Carga Marcas (y Modelos si es Camión)
     segSel.addEventListener('change', function() {
       var seg = segSel.value;
       if (!seg) { resetDespuesDeSegmento(); return; }
@@ -441,44 +457,72 @@
       var url = webhookUrl + '?type=brands&domain=' + domain + '&category=' + category;
 
       brandSel.innerHTML = '<option class="loading-text">Cargando marcas...</option>';
+      if (domain === 'MLA-TRUCKS') {
+        document.getElementById('model').innerHTML = '<option class="loading-text">Cargando modelos...</option>';
+      }
+
       google.script.run.withSuccessHandler(function(data) {
-        if (!data || data.error || data.length === 0) {
+        if (!data || data.error) {
           brandSel.innerHTML = '<option value="">Error, intentá de nuevo</option>';
           brandSel.disabled = false;
           return;
         }
-        var opts = '<option value="">-- Seleccionar Marca --</option>';
-        var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
-        for (var i = 0; i < sorted.length; i++) {
-          opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
+        
+        if (Array.isArray(data)) {
+          var marcasArr = null;
+          var modelosArr = null;
+          
+          // Buscar si vienen envueltos en BRAND y MODEL (Formato Camiones)
+          for (var i = 0; i < data.length; i++) {
+            if (data[i] && data[i].BRAND) marcasArr = data[i].BRAND;
+            if (data[i] && data[i].MODEL) modelosArr = data[i].MODEL;
+          }
+
+          if (marcasArr && modelosArr) {
+            // Es Camión y n8n devolvió objeto con marcas y modelos
+            fillCombo('brand', marcasArr, '-- Seleccionar Marca --');
+            fillCombo('model', modelosArr, '-- Seleccionar Modelo --');
+          } 
+          else if (data.length > 0 && data[0].id !== undefined) {
+            // Es Auto/SUV y n8n devolvió el array normal plano
+            fillCombo('brand', data, '-- Seleccionar Marca --');
+          } else {
+            brandSel.innerHTML = '<option value="">Sin datos</option>';
+            brandSel.disabled = false;
+          }
+        } else {
+          brandSel.innerHTML = '<option value="">Sin datos</option>';
+          brandSel.disabled = false;
         }
-        brandSel.innerHTML = opts;
-        brandSel.disabled = false;
       }).fetchN8nWebhook(url);
     });
 
     // B) Al cambiar la marca → Carga Modelos
     document.addEventListener('change', function(e) {
       if (e.target && e.target.id === 'brand') {
+        var domain = getDomain(segSel.value);
+        if (domain === 'MLA-TRUCKS') {
+          // En camiones, los modelos ya se cargaron junto con las marcas en el paso A.
+          // Cambiar la marca NO afecta a los modelos. Ignoramos.
+          return;
+        }
+
         var brandId = e.target.value;
         if (!brandId) { resetDesdeMarca(); return; }
         resetDesdeModelo();
 
-        var domain = getDomain(segSel.value);
         var url = webhookUrl + '?type=models&domain=' + domain + '&brand=' + brandId;
 
-        modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><select id="model" disabled><option>Buscando modelos...</option></select>';
+        document.getElementById('model').innerHTML = '<option>Buscando modelos...</option>';
+        document.getElementById('model').disabled = true;
+        
         google.script.run.withSuccessHandler(function(data) {
           if (!data || data.error || data.length === 0) {
             modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><input type="text" id="model" placeholder="Escribí el modelo">';
             return;
           }
-          var opts = '<option value="">-- Seleccionar Modelo --</option>';
-          var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
-          for (var i = 0; i < sorted.length; i++) {
-            opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
-          }
-          modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><select id="model">' + opts + '</select>';
+          modelContainer.innerHTML = '<label>Modelo <span class="req">*</span></label><select id="model"></select>';
+          fillCombo('model', data, '-- Seleccionar Modelo --');
         }).fetchN8nWebhook(url);
       }
     });
@@ -507,18 +551,16 @@
         var brandId = document.getElementById('brand').value;
         var url = webhookUrl + '?type=trims&domain=' + domain + '&brand=' + brandId + '&model=' + modelId;
 
-        trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim" disabled><option>Buscando versiones...</option></select>';
+        document.getElementById('trim').innerHTML = '<option>Buscando versiones...</option>';
+        document.getElementById('trim').disabled = true;
+        
         google.script.run.withSuccessHandler(function(data) {
           if (!data || data.error || data.length === 0) {
             trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><input type="text" id="trim" placeholder="Escribí la versión">';
             return;
           }
-          var opts = '<option value="">-- Seleccionar Versión --</option>';
-          var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
-          for (var i = 0; i < sorted.length; i++) {
-            opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
-          }
-          trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim">' + opts + '</select>';
+          trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim"></select>';
+          fillCombo('trim', data, '-- Seleccionar Versión --');
         }).fetchN8nWebhook(url);
       }
     });
@@ -551,12 +593,8 @@
           container.innerHTML = labelHtml + '<input type="text" id="' + selectId + '" placeholder="' + placeholder + '">';
           return;
         }
-        var opts = '<option value="">-- Elegir --</option>';
-        var sorted = data.sort(function(a, b) { return a.name.localeCompare(b.name); });
-        for (var i = 0; i < sorted.length; i++) {
-          opts += '<option value="' + sorted[i].id + '">' + sorted[i].name + '</option>';
-        }
-        container.innerHTML = labelHtml + '<select id="' + selectId + '">' + opts + '</select>';
+        container.innerHTML = labelHtml + '<select id="' + selectId + '"></select>';
+        fillCombo(selectId, data, '-- Elegir --');
       }).fetchN8nWebhook(url);
     }
 
