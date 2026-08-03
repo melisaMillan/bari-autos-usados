@@ -365,7 +365,6 @@ function onEdit(e) {
   }
   if (!isPublished) return;
 
-  const headersMap = getHeadersMap(sheet);
   const rowRange   = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
 
   if (isRowOutdated(sheet, rowIndex, headersMap, snapData)) {
