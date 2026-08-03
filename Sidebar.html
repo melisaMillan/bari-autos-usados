@@ -577,10 +577,12 @@
         var modelId = document.getElementById('model').value;
         var baseParams = '&domain=' + domain + '&brand=' + brandId + '&model=' + modelId + '&trim=' + trimId;
 
-        loadExtra('VEHICLE_YEAR', 'yearContainer', 'year', '<label>Año <span class="req">*</span></label>', 'Ej: 2020', baseParams);
+        // Año: siempre manual (sin llamada a n8n)
+        fallbackToInput('yearContainer', '<label>Año <span class="req">*</span></label>', 'year', 'Ej: 2020');
         loadExtra('DOORS', 'doorContainer', 'door', '<label>Puertas <span class="req">*</span></label>', 'N° puertas', baseParams);
         loadExtra('COLOR', 'colorContainer', 'color', '<label>Color</label>', 'Color', baseParams);
-        loadExtra('TRANSMISSION', 'transContainer', 'transmision', '<label>Transmisión</label>', 'Tipo transmisión', baseParams);
+        // Transmisión: siempre manual (sin llamada a n8n)
+        fallbackToInput('transContainer', '<label>Transmisión</label>', 'transmision', 'Ej: Manual / Automática');
       }
     });
 

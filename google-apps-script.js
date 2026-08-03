@@ -434,17 +434,8 @@ function deleteSelectedRow() {
     return;
   }
 
-  // Verificar si está publicado en redes (tiene snapshot)
-  var snap = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SNAPSHOTS_NAME);
-  if (snap) {
-    var snapData = snap.getDataRange().getValues();
-    for (var i = 1; i < snapData.length; i++) {
-      if (snapData[i][0] == row) {
-        ui.alert('🚫 No se puede eliminar', 'Este vehículo está publicado en redes.\nPrimero eliminalo de redes usando "❌ Eliminar de redes" y luego intentá de nuevo.', ui.ButtonSet.OK);
-        return;
-      }
-    }
-  }
+  // Verificar si está publicado en redes (por dominio — primer chequeo rápido antes de pedir confirmación)
+  // (La verificación completa por dominio se hace más abajo luego de leer el dominio de la fila)
 
   // Confirmar con el usuario
   var headersMap = getHeadersMap(sheet);
@@ -610,7 +601,20 @@ function writeNewVehicle(data) {
     // --- Ordenar Stock por Segmento luego de guardar ---
     sortStockBySegmento(sheet, map);
 
-    return { success: true, message: '✅ Vehículo cargado en fila ' + newRow + '!', row: newRow };
+    // --- Buscar la fila real del auto LUEGO del sort (el sort pudo haberla movido) ---
+    var realRow = newRow; // fallback por si no se encuentra
+    var dominioVal = (data.dominio || '').toString().trim().toUpperCase();
+    if (dominioVal) {
+      var allData = sheet.getRange(2, map['dominio'], sheet.getLastRow() - 1, 1).getValues();
+      for (var d = 0; d < allData.length; d++) {
+        if (allData[d][0].toString().trim().toUpperCase() === dominioVal) {
+          realRow = d + 2;
+          break;
+        }
+      }
+    }
+
+    return { success: true, message: '✅ Vehículo cargado correctamente!', row: realRow, dominio: dominioVal };
     
   } catch (e) {
     return { success: false, message: '❌ Error: ' + e.message };
