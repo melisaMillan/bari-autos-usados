@@ -46,15 +46,12 @@ function requestReservation() {
   const rowData = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
   
   const dominioIdx = localHeaders['dominio'];
-  const disponibleIdx = localHeaders['disponible'];
-  
   if (!dominioIdx) return ui.alert('❌ No se encontró la columna "Dominio".');
 
   const dominio = rowData[dominioIdx - 1];
   const marca = localHeaders['marca'] ? rowData[localHeaders['marca']-1] : '';
   const modelo = localHeaders['modelo'] ? rowData[localHeaders['modelo']-1] : '';
   const sucursal = localHeaders['sucursal'] ? rowData[localHeaders['sucursal']-1] : '';
-  const disponible = disponibleIdx ? rowData[disponibleIdx - 1] : 'SI';
   
   let currentUserEmail = Session.getActiveUser().getEmail();
   
@@ -68,57 +65,61 @@ function requestReservation() {
   }
   if (!dominio) return ui.alert('⚠️ Esta fila no tiene un Dominio válido.');
 
-  // Si YA ESTÁ RESERVADO -> Lógica de Cola de Espera
-  if (disponible && disponible.toString().toUpperCase() === 'NO') {
-    try {
-      const master = SpreadsheetApp.openById(MASTER_SPREADSHEET_ID);
-      const queueSheet = master.getSheetByName('Colas_Reserva');
-      if (!queueSheet) return ui.alert('❌ Faltante: La hoja "Colas_Reserva" no existe en la Master.');
-
-      // Revisar si ya está en cola
-      const queueData = queueSheet.getDataRange().getValues();
-      const yaEnCola = queueData.some(r => r[0] === dominio && r[1] === currentUserEmail);
-      
-      if (yaEnCola) return ui.alert('ℹ️ Ya te encontrás en la cola de espera para este auto.');
-
-      const res = ui.alert('Vehículo Ocupado', `Este auto ya está reservado.\n¿Querés anotarte en la cola de espera?`, ui.ButtonSet.YES_NO);
-      if (res !== ui.Button.YES) return;
-
-      const clientPrompt = ui.prompt('Cola de Espera', 'Ingresá el Nombre y Apellido de tu cliente:', ui.ButtonSet.OK_CANCEL);
-      if (clientPrompt.getSelectedButton() !== ui.Button.OK) return;
-
-      const nombreCliente = clientPrompt.getResponseText();
-      
-      // Agregar a la cola en la Master
-      queueSheet.appendRow([dominio, currentUserEmail, nombreCliente, new Date()]);
-      ui.alert('✅ Te agregamos a la cola de espera. Te avisamos por email si se libera.');
-      
-    } catch (e) {
-      ui.alert(`❌ Error al conectar: ${e.message}`);
-    }
-    return;
-  }
-
-  // Si está DISPONIBLE -> Lógica de Reserva Normal
-  const clientPrompt = ui.prompt('Confirmar Reserva', `Ingresá el Nombre y Apellido de tu cliente para reservar el ${dominio}:`, ui.ButtonSet.OK_CANCEL);
-  if (clientPrompt.getSelectedButton() !== ui.Button.OK) return;
-  const nombreCliente = clientPrompt.getResponseText();
-
-  if (!nombreCliente || nombreCliente.trim() === "") {
-    return ui.alert("⚠️ Tenés que ingresar el nombre del cliente para poder reservar.");
-  }
-
   try {
+    // 1. Ir a buscar el estado REAL a la Master (evita bugs si la planilla local está desactualizada)
     const master = SpreadsheetApp.openById(MASTER_SPREADSHEET_ID);
     const masterSheet = master.getSheetByName('Stock'); 
     const masterHeaders = getHeadersMap(masterSheet);
     
-    // Buscar la fila
     const dominiosValues = masterSheet.getRange(2, masterHeaders['dominio'], masterSheet.getLastRow() - 1, 1).getValues();
     const masterRowIdx = dominiosValues.findIndex(r => r[0].toString().trim() === dominio.toString().trim());
     
     if (masterRowIdx === -1) return ui.alert(`❌ No se encontró ${dominio} en el sistema.`);
     const masterRow = masterRowIdx + 2;
+
+    const estadoReal = masterHeaders['estado'] ? masterSheet.getRange(masterRow, masterHeaders['estado']).getValue().toString().trim() : '';
+    const vendedorReal = masterHeaders['vendedor_reserva'] ? masterSheet.getRange(masterRow, masterHeaders['vendedor_reserva']).getValue().toString().trim() : '';
+    const disponibleReal = masterHeaders['disponible'] ? masterSheet.getRange(masterRow, masterHeaders['disponible']).getValue().toString().trim().toUpperCase() : 'SI';
+
+    // Si YA ESTÁ RESERVADO -> Lógica de Cola de Espera
+    if (disponibleReal === 'NO' || estadoReal === 'Reservado') {
+      
+      // Chequear si el vendedor es el titular actual
+      if (vendedorReal === currentUserEmail) {
+        return ui.alert('⚠️ Ya sos el titular de la reserva actual de este vehículo.');
+      }
+
+      const queueSheet = master.getSheetByName('Colas_Reserva');
+      if (!queueSheet) return ui.alert('❌ Faltante: La hoja "Colas_Reserva" no existe en la Master.');
+
+      // Revisar si ya está en cola
+      const queueData = queueSheet.getDataRange().getValues();
+      const yaEnCola = queueData.some(r => r[0].toString().trim() === dominio.toString().trim() && r[1].toString().trim() === currentUserEmail);
+      
+      if (yaEnCola) return ui.alert('ℹ️ Ya te encontrás en la cola de espera para este auto.');
+
+      const res = ui.alert('Vehículo Ocupado', `Este auto ya está reservado por ${vendedorReal || 'otro vendedor'}.\n¿Querés anotarte en la cola de espera?`, ui.ButtonSet.YES_NO);
+      if (res !== ui.Button.YES) return;
+
+      const clientPrompt = ui.prompt('Cola de Espera', 'Ingresá el Nombre y Apellido de tu cliente:', ui.ButtonSet.OK_CANCEL);
+      if (clientPrompt.getSelectedButton() !== ui.Button.OK) return;
+
+      const nombreClienteCola = clientPrompt.getResponseText();
+      if (!nombreClienteCola || nombreClienteCola.trim() === "") return ui.alert("⚠️ Tenés que ingresar el nombre del cliente.");
+      
+      // Agregar a la cola en la Master
+      queueSheet.appendRow([dominio, currentUserEmail, nombreClienteCola, new Date()]);
+      return ui.alert('✅ Te agregamos a la cola de espera. Te avisamos por email si se libera.');
+    }
+
+    // Si está DISPONIBLE -> Lógica de Reserva Normal
+    const clientPrompt = ui.prompt('Confirmar Reserva', `Ingresá el Nombre y Apellido de tu cliente para reservar el ${dominio}:`, ui.ButtonSet.OK_CANCEL);
+    if (clientPrompt.getSelectedButton() !== ui.Button.OK) return;
+    const nombreCliente = clientPrompt.getResponseText();
+
+    if (!nombreCliente || nombreCliente.trim() === "") {
+      return ui.alert("⚠️ Tenés que ingresar el nombre del cliente para poder reservar.");
+    }
 
     const expiryDate = calculateExpirationDate();
 
@@ -129,12 +130,11 @@ function requestReservation() {
     if (masterHeaders['vencimiento_reserva']) masterSheet.getRange(masterRow, masterHeaders['vencimiento_reserva']).setValue(expiryDate);
     if (masterHeaders['cliente_reserva']) masterSheet.getRange(masterRow, masterHeaders['cliente_reserva']).setValue(nombreCliente);
 
-    // NOTA: Se eliminó el setBackground de acá para que lo maneje el Formato Condicional de Sheets.
     ui.alert(`✅ ¡Reserva confirmada!\n${dominio} reservado para ${nombreCliente}.`);
 
     // Enviar email broadcast
     const subject = `¡Vehículo reservado! ${marca} ${modelo} (${dominio})`;
-    const body = `Hola,\n\nEl vehículo ${marca} ${modelo} (${dominio}) (Fila ${masterRow}), disponible en ${sucursal}, se ha reservado a nombre de ${nombreCliente} (por el vendedor ${currentUserEmail}) hasta el ${expiryDate.toLocaleString()}.\n\nSaludos.`;
+    const body = `Hola,\n\nEl vehículo ${marca} ${modelo} (${dominio}), disponible en ${sucursal}, se ha reservado a nombre de ${nombreCliente} (por el vendedor ${currentUserEmail}) hasta el ${expiryDate.toLocaleString()}.\n\nSaludos.`;
     
     MailApp.sendEmail(EMAILS_NOTIFICACION_VENTAS.join(','), subject, body);
 
