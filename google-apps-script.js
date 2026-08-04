@@ -4,6 +4,9 @@
 // ===================================================
 
 const N8N_WEBHOOK_URL_PUBLICAR = "https://bipolos.app.n8n.cloud/webhook/bari-autos";
+// Webhook que dispara la carga de imágenes a Digital Ocean (antes era un Sheets Trigger)
+// GAS llama directamente con los datos correctos luego del sort, evitando el bug de fila.
+const N8N_WEBHOOK_URL_IMAGENES = "https://bipolos.app.n8n.cloud/webhook/bari-imagenes"; // ← Reemplazá con la URL real de tu webhook de imágenes
 const HORA_CORTE = 18;
 
 // ── Colores de fila ───────────────────────────────────
@@ -610,6 +613,39 @@ function writeNewVehicle(data) {
           realRow = d + 2;
           break;
         }
+      }
+    }
+
+    // --- Disparar webhook de imágenes si tiene URL de fotos (reemplaza el Sheets Trigger) ---
+    if (data.urlFotos && data.urlFotos.toString().trim() !== '') {
+      try {
+        // Leer la fila completa post-sort para enviarla con los datos definitivos
+        var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        var rowValues = sheet.getRange(realRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+        var carData = {};
+        headers.forEach(function(h, i) {
+          if (h) {
+            var k = h.toString().trim().toLowerCase()
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, '_');
+            carData[k] = rowValues[i];
+          }
+        });
+        var imagePayload = {
+          trigger: 'new_vehicle',
+          row_number: realRow,
+          dominio: dominioVal,
+          car: carData
+        };
+        UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
+          method: 'post',
+          contentType: 'application/json',
+          payload: JSON.stringify(imagePayload),
+          muteHttpExceptions: true
+        });
+      } catch (imgErr) {
+        // No interrumpimos el guardado si el webhook de imágenes falla
+        console.error('Webhook imágenes error: ' + imgErr.message);
       }
     }
 
