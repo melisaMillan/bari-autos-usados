@@ -341,6 +341,7 @@ function isRowOutdated(sheet, rowIndex, headersMap, snapData) {
 /**
  * Trigger simple onEdit — detecta cambios en filas publicadas en tiempo real.
  * 🟡 Naranja = publicación desactualizada / 🟢 Verde = al día con lo publicado
+ * 📸 Si se edita "URL Fotos Drive" manualmente, dispara el webhook de imágenes a n8n.
  */
 function onEdit(e) {
   if (!e) return;
@@ -348,6 +349,7 @@ function onEdit(e) {
   if (sheet.getName() !== 'Stock') return; // Solo monitorear la hoja Stock
 
   const rowIndex = e.range.getRow();
+  if (rowIndex <= 1) return; // Ignorar cabecera
   const headersMap = getHeadersMap(sheet);
   const colDominio = headersMap['dominio'];
   if (!colDominio) return;
@@ -355,6 +357,46 @@ function onEdit(e) {
   const dominio = sheet.getRange(rowIndex, colDominio).getValue().toString().trim().toUpperCase();
   if (!dominio) return;
 
+  // ── Detectar edición manual de "URL Fotos Drive" ──────────────────────────
+  // Si el usuario editó la columna de fotos manualmente (no desde el Sidebar),
+  // llamamos al webhook de imágenes directamente desde acá.
+  // Esto reemplaza el Sheets Trigger de n8n que tenía el bug de fila incorrecta.
+  const colEdited = e.range.getColumn();
+  const colFotos  = headersMap['url_fotos_drive'];
+  if (colFotos && colEdited === colFotos) {
+    const newUrl = e.value ? e.value.toString().trim() : '';
+    if (newUrl !== '') {
+      try {
+        const headers   = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const carData   = {};
+        headers.forEach(function(h, i) {
+          if (h) {
+            var k = h.toString().trim().toLowerCase()
+              .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, '_');
+            carData[k] = rowValues[i];
+          }
+        });
+        UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
+          method: 'post',
+          contentType: 'application/json',
+          payload: JSON.stringify({
+            trigger: 'url_fotos_manual_edit',
+            row_number: rowIndex,
+            dominio: dominio,
+            car: carData
+          }),
+          muteHttpExceptions: true
+        });
+      } catch (imgErr) {
+        console.error('onEdit → Webhook imágenes error: ' + imgErr.message);
+      }
+    }
+    // Aunque hayamos llamado al webhook, seguimos abajo para evaluar color de fila
+  }
+
+  // ── Colorear fila si el auto ya está publicado ────────────────────────────
   const snap = e.source.getSheetByName(SHEET_SNAPSHOTS_NAME);
   if (!snap) return;
 
@@ -368,7 +410,7 @@ function onEdit(e) {
   }
   if (!isPublished) return;
 
-  const rowRange   = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
+  const rowRange = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
 
   if (isRowOutdated(sheet, rowIndex, headersMap, snapData)) {
     rowRange.setBackground(COLOR_OUTDATED);  // 🟡 Naranja
