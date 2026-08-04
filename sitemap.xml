@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://bariusados.com.ar/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://bariusados.com.ar/?auto=audi-a1-1-4-tfsi-125cv-2023-bahia-blanca</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bariusados.com.ar/?auto=mercedes-benz-accelo-1016-2019-bahia-blanca</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bariusados.com.ar/?auto=volkswagen-amarok-2-0-cd-tdi-140cv-4x2-startline-2013-bahia-blanca</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bariusados.com.ar/?auto=mercedes-benz-clase-glc-2-0-glc300-4matic-coupe-at-2020-tandil</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bariusados.com.ar/?auto=citroen-jumper-2-2-435-ch-l3-hdi-130-mt6-2019-bahia-blanca</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>
