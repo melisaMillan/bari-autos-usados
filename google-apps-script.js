@@ -338,63 +338,25 @@ function isRowOutdated(sheet, rowIndex, headersMap, snapData) {
   return false;
 }
 
+
 /**
- * Trigger simple onEdit — detecta cambios en filas publicadas en tiempo real.
+ * SIMPLE TRIGGER — Solo puede hacer operaciones internas de Sheets.
+ * ⚠️ Los Simple Triggers NO pueden llamar servicios externos (UrlFetchApp).
  * 🟡 Naranja = publicación desactualizada / 🟢 Verde = al día con lo publicado
- * 📸 Si se edita "URL Fotos Drive" manualmente, dispara el webhook de imágenes a n8n.
  */
 function onEdit(e) {
   if (!e) return;
   const sheet = e.source.getActiveSheet();
-  if (sheet.getName() !== 'Stock') return; // Solo monitorear la hoja Stock
+  if (sheet.getName() !== 'Stock') return;
 
   const rowIndex = e.range.getRow();
-  if (rowIndex <= 1) return; // Ignorar cabecera
+  if (rowIndex <= 1) return;
   const headersMap = getHeadersMap(sheet);
   const colDominio = headersMap['dominio'];
   if (!colDominio) return;
-  
+
   const dominio = sheet.getRange(rowIndex, colDominio).getValue().toString().trim().toUpperCase();
   if (!dominio) return;
-
-  // ── Detectar edición manual de "URL Fotos Drive" ──────────────────────────
-  // Si el usuario editó la columna de fotos manualmente (no desde el Sidebar),
-  // llamamos al webhook de imágenes directamente desde acá.
-  // Esto reemplaza el Sheets Trigger de n8n que tenía el bug de fila incorrecta.
-  const colEdited = e.range.getColumn();
-  const colFotos  = headersMap['url_fotos_drive'];
-  if (colFotos && colEdited === colFotos) {
-    const newUrl = e.value ? e.value.toString().trim() : '';
-    if (newUrl !== '') {
-      try {
-        const headers   = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const carData   = {};
-        headers.forEach(function(h, i) {
-          if (h) {
-            var k = h.toString().trim().toLowerCase()
-              .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-              .replace(/\s+/g, '_');
-            carData[k] = rowValues[i];
-          }
-        });
-        UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
-          method: 'post',
-          contentType: 'application/json',
-          payload: JSON.stringify({
-            trigger: 'url_fotos_manual_edit',
-            row_number: rowIndex,
-            dominio: dominio,
-            car: carData
-          }),
-          muteHttpExceptions: true
-        });
-      } catch (imgErr) {
-        console.error('onEdit → Webhook imágenes error: ' + imgErr.message);
-      }
-    }
-    // Aunque hayamos llamado al webhook, seguimos abajo para evaluar color de fila
-  }
 
   // ── Colorear fila si el auto ya está publicado ────────────────────────────
   const snap = e.source.getSheetByName(SHEET_SNAPSHOTS_NAME);
@@ -403,21 +365,102 @@ function onEdit(e) {
   const snapData = snap.getDataRange().getValues();
   let isPublished = false;
   for (let i = 1; i < snapData.length; i++) {
-    if (snapData[i][1].toString().trim().toUpperCase() === dominio) { 
-      isPublished = true; 
-      break; 
+    if (snapData[i][1].toString().trim().toUpperCase() === dominio) {
+      isPublished = true;
+      break;
     }
   }
   if (!isPublished) return;
 
   const rowRange = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
-
   if (isRowOutdated(sheet, rowIndex, headersMap, snapData)) {
     rowRange.setBackground(COLOR_OUTDATED);  // 🟡 Naranja
   } else {
     rowRange.setBackground(COLOR_PUBLISHED); // 🟢 Verde
   }
 }
+
+/**
+ * INSTALLABLE TRIGGER — Tiene permisos completos, puede llamar UrlFetchApp.
+ * 📸 Detecta edición manual de "URL Fotos Drive" y empuja al webhook de n8n.
+ * Se instala UNA SOLA VEZ corriendo setupImageEditTrigger() desde el editor.
+ */
+function onEditInstalable(e) {
+  if (!e) return;
+  const sheet = e.source.getActiveSheet();
+  if (sheet.getName() !== 'Stock') return;
+
+  const rowIndex = e.range.getRow();
+  if (rowIndex <= 1) return;
+
+  const headersMap = getHeadersMap(sheet);
+  const colFotos   = headersMap['url_fotos_drive'];
+  if (!colFotos) return;
+
+  // Solo actuar si la columna editada es "URL Fotos Drive"
+  if (e.range.getColumn() !== colFotos) return;
+
+  const newUrl = e.value ? e.value.toString().trim() : '';
+  if (newUrl === '') return; // No disparar si se borró la URL
+
+  const colDominio = headersMap['dominio'];
+  if (!colDominio) return;
+  const dominio = sheet.getRange(rowIndex, colDominio).getValue().toString().trim().toUpperCase();
+  if (!dominio) return;
+
+  try {
+    const headers   = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const carData   = {};
+    headers.forEach(function(h, i) {
+      if (h) {
+        var k = h.toString().trim().toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '_');
+        carData[k] = rowValues[i];
+      }
+    });
+    UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({
+        trigger: 'url_fotos_manual_edit',
+        row_number: rowIndex,
+        dominio: dominio,
+        car: carData
+      }),
+      muteHttpExceptions: true
+    });
+    console.log('✅ Webhook imágenes disparado para: ' + dominio + ' (fila ' + rowIndex + ')');
+  } catch (imgErr) {
+    console.error('onEditInstalable → Webhook error: ' + imgErr.message);
+  }
+}
+
+/**
+ * Correr SOLO UNA VEZ desde el editor de Apps Script para instalar el trigger.
+ * Menú: Ejecutar → setupImageEditTrigger
+ * Esto hace que onEditInstalable tenga permisos completos (UrlFetchApp incluido).
+ */
+function setupImageEditTrigger() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Eliminar triggers previos del mismo nombre para no duplicar
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'onEditInstalable') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+
+  // Crear el trigger instalable
+  ScriptApp.newTrigger('onEditInstalable')
+    .forSpreadsheet(ss)
+    .onEdit()
+    .create();
+
+  SpreadsheetApp.getUi().alert('✅ Trigger instalado correctamente.\nCada vez que edites "URL Fotos Drive" en Stock, se disparará el webhook de imágenes.');
+}
+
 
 // =====================================================
 // SIDEBAR: ABRIR PANEL DE CARGA
