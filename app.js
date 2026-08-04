@@ -155,6 +155,24 @@ function fetchAndLoadCatalog() {
             // Filter out empty rows and rows marked not to publish
             vehicles = vehicles.filter(v => v.marca && v.modelo && v.publicar !== 'NO');
             
+            // Generate unique SEO slugs
+            const slugCounts = {};
+            vehicles.forEach(car => {
+                const rawSlug = `${car.marca} ${car.modelo} ${car.version} ${car.anio} ${car.ciudad}`
+                    .toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+                    .replace(/[^a-z0-9]+/g, '-')                      // replace non-alphanumeric with dashes
+                    .replace(/(^-|-$)+/g, '');                        // trim dashes
+                
+                if (slugCounts[rawSlug]) {
+                    slugCounts[rawSlug]++;
+                    car.slug = `${rawSlug}-${slugCounts[rawSlug]}`;
+                } else {
+                    slugCounts[rawSlug] = 1;
+                    car.slug = rawSlug;
+                }
+            });
+
             // Build the filter dropdown menus dynamically
             buildFiltersDropdowns();
             
@@ -314,9 +332,9 @@ function setupEventListeners() {
 
     // Browser back/forward support (popstate)
     window.addEventListener('popstate', (e) => {
-        const carId = getUrlParam('v');
-        if (carId) {
-            const car = vehicles.find(v => v.id.toLowerCase() === carId.toLowerCase());
+        const carSlug = getUrlParam('auto');
+        if (carSlug) {
+            const car = vehicles.find(v => v.slug === carSlug);
             if (car) openModal(car, true); // true = skip pushState
         } else {
             closeModal(true); // true = skip pushState
@@ -585,7 +603,7 @@ function openModal(car, skipPushState = false) {
 
     // SEO & Deep Linking: Update URL and Meta tags
     if (!skipPushState) {
-        updateUrlParam('v', car.id);
+        updateUrlParam('auto', car.slug);
     }
     
     document.title = `${car.marca} ${car.modelo} ${car.anio} | Bari Usados`;
@@ -606,7 +624,7 @@ function closeModal(skipPushState = false) {
     document.body.style.overflow = '';
 
     if (!skipPushState) {
-        updateUrlParam('v', null);
+        updateUrlParam('auto', null);
     }
 
     // Restore original Meta tags
@@ -916,9 +934,9 @@ function updateUrlParam(key, value) {
 }
 
 function checkDeepLink() {
-    const carId = getUrlParam('v');
-    if (carId) {
-        const car = vehicles.find(v => v.id.toLowerCase() === carId.toLowerCase());
+    const carSlug = getUrlParam('auto');
+    if (carSlug) {
+        const car = vehicles.find(v => v.slug === carSlug);
         if (car) {
             openModal(car, true); // true = we don't need to pushState because it's already in the URL
         }

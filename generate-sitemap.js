@@ -14,12 +14,16 @@ https.get(CSV_URL, (res) => {
         const lines = data.split('\n');
         if (lines.length === 0) return;
 
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const idxDominio = headers.findIndex(h => h.includes('dominio') || h.includes('patente'));
-        const idxPublicar = headers.findIndex(h => h.includes('publicar'));
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_'));
+        const idxPublicar = headers.findIndex(h => h === 'publicar');
+        const idxMarca = headers.findIndex(h => h === 'marca');
+        const idxModelo = headers.findIndex(h => h === 'modelo' || h === 'descripcion_de_modelo');
+        const idxVersion = headers.findIndex(h => h === 'version');
+        const idxAnio = headers.findIndex(h => h === 'ano' || h === 'anio');
+        const idxCiudad = headers.findIndex(h => h === 'sucursal' || h === 'ciudad');
 
-        if (idxDominio === -1) {
-            console.error("Error: No se encontró la columna Dominio.");
+        if (idxMarca === -1 || idxModelo === -1) {
+            console.error("Error: Faltan columnas clave (Marca, Modelo).");
             return;
         }
 
@@ -29,9 +33,12 @@ https.get(CSV_URL, (res) => {
         // Homepage
         sitemap += `  <url>\n    <loc>${SITE_URL}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
 
+        const slugCounts = {};
+
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
             
+            // Simple CSV split handling quotes
             let currentLine = lines[i];
             let cols = [];
             let inQuotes = false;
@@ -43,11 +50,29 @@ https.get(CSV_URL, (res) => {
             }
             cols.push(currentStr);
 
-            const dominio = cols[idxDominio] ? cols[idxDominio].trim() : '';
             const publicar = idxPublicar !== -1 && cols[idxPublicar] ? cols[idxPublicar].trim().toUpperCase() : 'SI';
+            const marca = cols[idxMarca] ? cols[idxMarca].trim() : '';
+            const modelo = cols[idxModelo] ? cols[idxModelo].trim() : '';
+            const version = idxVersion !== -1 && cols[idxVersion] ? cols[idxVersion].trim() : '';
+            const anio = idxAnio !== -1 && cols[idxAnio] ? cols[idxAnio].trim() : '';
+            const ciudad = idxCiudad !== -1 && cols[idxCiudad] ? cols[idxCiudad].trim() : '';
 
-            if (dominio && publicar !== 'NO') {
-                sitemap += `  <url>\n    <loc>${SITE_URL}/?v=${encodeURIComponent(dominio)}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+            if (marca && modelo && publicar !== 'NO') {
+                const rawSlug = `${marca} ${modelo} ${version} ${anio} ${ciudad}`
+                    .toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)+/g, '');
+                
+                let finalSlug = rawSlug;
+                if (slugCounts[rawSlug]) {
+                    slugCounts[rawSlug]++;
+                    finalSlug = `${rawSlug}-${slugCounts[rawSlug]}`;
+                } else {
+                    slugCounts[rawSlug] = 1;
+                }
+
+                sitemap += `  <url>\n    <loc>${SITE_URL}/?auto=${encodeURIComponent(finalSlug)}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
             }
         }
         
