@@ -386,27 +386,35 @@ function onEdit(e) {
  * Se instala UNA SOLA VEZ corriendo setupImageEditTrigger() desde el editor.
  */
 function onEditInstalable(e) {
-  if (!e) return;
+  // LOG 1: ¿El trigger se disparó?
+  console.log('onEditInstalable → disparado. Sheet: ' + (e && e.source ? e.source.getActiveSheet().getName() : 'sin e'));
+  if (!e) { console.log('onEditInstalable → salida: sin evento'); return; }
+
   const sheet = e.source.getActiveSheet();
-  if (sheet.getName() !== 'Stock') return;
+  console.log('onEditInstalable → hoja: ' + sheet.getName() + ' | col: ' + e.range.getColumn() + ' | fila: ' + e.range.getRow());
+
+  if (sheet.getName() !== 'Stock') { console.log('onEditInstalable → salida: hoja no es Stock'); return; }
 
   const rowIndex = e.range.getRow();
-  if (rowIndex <= 1) return;
+  if (rowIndex <= 1) { console.log('onEditInstalable → salida: cabecera'); return; }
 
   const headersMap = getHeadersMap(sheet);
-  const colFotos   = headersMap['url_fotos_drive'];
-  if (!colFotos) return;
+  const colFotos = headersMap['url_fotos_drive'];
+  console.log('onEditInstalable → colFotos detectada: ' + colFotos + ' | col editada: ' + e.range.getColumn());
 
-  // Solo actuar si la columna editada es "URL Fotos Drive"
-  if (e.range.getColumn() !== colFotos) return;
+  if (!colFotos) { console.log('onEditInstalable → salida: no encontré columna url_fotos_drive. Headers: ' + JSON.stringify(headersMap)); return; }
+  if (e.range.getColumn() !== colFotos) { console.log('onEditInstalable → salida: columna editada no es url_fotos_drive'); return; }
 
-  const newUrl = e.value ? e.value.toString().trim() : '';
-  if (newUrl === '') return; // No disparar si se borró la URL
+  // Leer el valor directamente de la celda (más confiable que e.value al pegar)
+  const newUrl = sheet.getRange(rowIndex, colFotos).getValue().toString().trim();
+  console.log('onEditInstalable → URL en celda: ' + newUrl);
+  if (newUrl === '') { console.log('onEditInstalable → salida: URL vacía'); return; }
 
   const colDominio = headersMap['dominio'];
-  if (!colDominio) return;
+  if (!colDominio) { console.log('onEditInstalable → salida: no encontré columna dominio'); return; }
   const dominio = sheet.getRange(rowIndex, colDominio).getValue().toString().trim().toUpperCase();
-  if (!dominio) return;
+  console.log('onEditInstalable → dominio: ' + dominio);
+  if (!dominio) { console.log('onEditInstalable → salida: dominio vacío'); return; }
 
   try {
     const headers   = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -420,22 +428,64 @@ function onEditInstalable(e) {
         carData[k] = rowValues[i];
       }
     });
-    UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
+
+    const payload = {
+      trigger: 'url_fotos_manual_edit',
+      row_number: rowIndex,
+      dominio: dominio,
+      car: carData
+    };
+    console.log('onEditInstalable → enviando a: ' + N8N_WEBHOOK_URL_IMAGENES);
+
+    const resp = UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
       method: 'post',
       contentType: 'application/json',
-      payload: JSON.stringify({
-        trigger: 'url_fotos_manual_edit',
-        row_number: rowIndex,
-        dominio: dominio,
-        car: carData
-      }),
+      payload: JSON.stringify(payload),
       muteHttpExceptions: true
     });
-    console.log('✅ Webhook imágenes disparado para: ' + dominio + ' (fila ' + rowIndex + ')');
+    console.log('onEditInstalable → respuesta HTTP: ' + resp.getResponseCode() + ' | body: ' + resp.getContentText().substring(0, 200));
   } catch (imgErr) {
     console.error('onEditInstalable → Webhook error: ' + imgErr.message);
   }
 }
+
+/**
+ * Función de diagnóstico — corré esto desde el editor para verificar
+ * que el webhook de imágenes responde correctamente, independientemente del trigger.
+ */
+function testImageWebhook() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Stock');
+  const row   = sheet.getActiveCell().getRow();
+  if (row <= 1) { SpreadsheetApp.getUi().alert('Seleccioná una fila de datos primero.'); return; }
+
+  const headersMap = getHeadersMap(sheet);
+  const headers    = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const rowValues  = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const carData    = {};
+  headers.forEach(function(h, i) {
+    if (h) {
+      var k = h.toString().trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '_');
+      carData[k] = rowValues[i];
+    }
+  });
+
+  const payload = { trigger: 'test_manual', row_number: row, dominio: carData['dominio'] || 'TEST', car: carData };
+  try {
+    const resp = UrlFetchApp.fetch(N8N_WEBHOOK_URL_IMAGENES, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    SpreadsheetApp.getUi().alert('Respuesta n8n: HTTP ' + resp.getResponseCode() + '\n\n' + resp.getContentText().substring(0, 300));
+  } catch (err) {
+    SpreadsheetApp.getUi().alert('❌ Error: ' + err.message);
+  }
+}
+
 
 /**
  * Correr SOLO UNA VEZ desde el editor de Apps Script para instalar el trigger.
