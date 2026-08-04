@@ -161,6 +161,9 @@ function fetchAndLoadCatalog() {
             // Render the initial grid
             applyFilters();
             showLoader(false);
+
+            // Check for deep link right after loading the catalog
+            checkDeepLink();
         },
         error: function(err) {
             console.error('Error fetching CSV:', err);
@@ -297,13 +300,26 @@ function setupEventListeners() {
     resetFiltersBtn.addEventListener('click', resetAllFilters);
 
     // Modal Close
-    modalCloseBtn.addEventListener('click', closeModal);
-    modalCloseBackdrop.addEventListener('click', closeModal);
+    modalCloseBtn.addEventListener('click', () => closeModal(false));
+    modalCloseBackdrop.addEventListener('click', (e) => {
+        if(e.target === modalCloseBackdrop) closeModal(false);
+    });
     
     // Close modal on ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !detailsModal.classList.contains('hidden')) {
-            closeModal();
+            closeModal(false);
+        }
+    });
+
+    // Browser back/forward support (popstate)
+    window.addEventListener('popstate', (e) => {
+        const carId = getUrlParam('v');
+        if (carId) {
+            const car = vehicles.find(v => v.id.toLowerCase() === carId.toLowerCase());
+            if (car) openModal(car, true); // true = skip pushState
+        } else {
+            closeModal(true); // true = skip pushState
         }
     });
 
@@ -501,7 +517,7 @@ function createPill(category, label, onRemove) {
 }
 
 // --- MODAL ACTIONS ---
-function openModal(car) {
+function openModal(car, skipPushState = false) {
     currentCarData = car; // Store for social card generation
 
     // Populate simple specs
@@ -566,11 +582,42 @@ function openModal(car) {
     // Show modal and prevent body scrolling
     detailsModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // SEO & Deep Linking: Update URL and Meta tags
+    if (!skipPushState) {
+        updateUrlParam('v', car.id);
+    }
+    
+    document.title = `${car.marca} ${car.modelo} ${car.anio} | Bari Usados`;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if(metaDesc) metaDesc.setAttribute('content', `Comprá tu ${car.marca} ${car.modelo} ${car.version} (${car.anio}) usado verificado en Bari.`);
+    
+    let ogImage = document.querySelector('meta[property="og:image"]');
+    if(ogImage && currentImages.length > 0) {
+        ogImage.setAttribute('content', currentImages[0]);
+    }
+
+    // Dynamic JSON-LD for this specific car
+    injectVehicleSchema(car);
 }
 
-function closeModal() {
+function closeModal(skipPushState = false) {
     detailsModal.classList.add('hidden');
     document.body.style.overflow = '';
+
+    if (!skipPushState) {
+        updateUrlParam('v', null);
+    }
+
+    // Restore original Meta tags
+    document.title = ORIGINAL_TITLE;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if(metaDesc) metaDesc.setAttribute('content', ORIGINAL_DESC);
+    
+    let ogImage = document.querySelector('meta[property="og:image"]');
+    if(ogImage) ogImage.setAttribute('content', ORIGINAL_OG_IMAGE);
+
+    removeVehicleSchema();
 }
 
 // --- GALLERY LOGIC ---
@@ -846,4 +893,68 @@ async function sendToN8N(base64Image, patente, car) {
     }
 
     return response;
+}
+
+// --- URL STATE AND SEO HELPERS ---
+const ORIGINAL_TITLE = document.title;
+const ORIGINAL_DESC = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+const ORIGINAL_OG_IMAGE = document.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+
+function getUrlParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+function updateUrlParam(key, value) {
+    const url = new URL(window.location);
+    if (value === null || value === '') {
+        url.searchParams.delete(key);
+    } else {
+        url.searchParams.set(key, value);
+    }
+    window.history.pushState({ carId: value }, '', url);
+}
+
+function checkDeepLink() {
+    const carId = getUrlParam('v');
+    if (carId) {
+        const car = vehicles.find(v => v.id.toLowerCase() === carId.toLowerCase());
+        if (car) {
+            openModal(car, true); // true = we don't need to pushState because it's already in the URL
+        }
+    }
+}
+
+function injectVehicleSchema(car) {
+    removeVehicleSchema(); // Clean up previous if any
+    
+    const schema = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": `${car.marca} ${car.modelo} ${car.version}`,
+      "image": car.imagenes,
+      "description": `Vehículo usado ${car.marca} ${car.modelo} año ${car.anio}. Km: ${car.kilometros}.`,
+      "sku": car.id,
+      "offers": {
+        "@type": "Offer",
+        "url": window.location.href,
+        "priceCurrency": car.moneda || "ARS",
+        "price": car.precio,
+        "itemCondition": "https://schema.org/UsedCondition",
+        "availability": car.estado === 'Disponible' ? "https://schema.org/InStock" : "https://schema.org/SoldOut"
+      }
+    };
+    
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'dynamic-vehicle-schema';
+    script.text = JSON.stringify(schema);
+    document.head.appendChild(script);
+}
+
+function removeVehicleSchema() {
+    const existing = document.getElementById('dynamic-vehicle-schema');
+    if (existing) {
+        existing.remove();
+    }
 }
