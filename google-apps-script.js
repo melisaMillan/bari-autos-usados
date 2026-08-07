@@ -425,7 +425,7 @@ function onEditInstalable(e) {
   const sheet = e.source.getActiveSheet();
   console.log('onEditInstalable → hoja: ' + sheet.getName() + ' | col: ' + e.range.getColumn() + ' | fila: ' + e.range.getRow());
 
-  if (sheet.getName() !== 'Stock') { console.log('onEditInstalable → salida: hoja no es Stock'); return; }
+  if (sheet.getName().toUpperCase() !== 'STOCK') { console.log('onEditInstalable → salida: hoja no es Stock'); return; }
 
   const rowIndex = e.range.getRow();
   if (rowIndex <= 1) { console.log('onEditInstalable → salida: cabecera'); return; }

@@ -8,7 +8,7 @@
 // In production, replace this with your Google Sheet published CSV URL.
 // Example: 'https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv'
 // const CSV_URL = 'cars-mock.csv';
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsjdvcV1oZXIKTXmK2GAQgKlqceFDYtfHK55lVl8dn9CqQg7Qlh5tlEeLaAeptH_pJvYLKCb3zQQ1v/pubhtml?gid=1061368151&single=true';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsjdvcV1oZXIKTXmK2GAQgKlqceFDYtfHK55lVl8dn9CqQg7Qlh5tlEeLaAeptH_pJvYLKCb3zQQ1v/pub?gid=1061368151&single=true&output=csv';
 
 // Contact WhatsApp number (with country code, no +, no spaces, e.g. '5492231234567')
 const WHATSAPP_PHONE = '5492262354705'; // Bari S.A. contact number
