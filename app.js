@@ -138,9 +138,9 @@ function fetchAndLoadCatalog() {
                     moneda: 'ARS', // Asumimos ARS por la columna precio_final_en_ars
                     tipo: (cleanRow.segmento || cleanRow.tipo || 'Auto').trim(),
                     kilometros: parseNumberString(cleanRow.km || cleanRow.kilometros),
-                    transmision: (cleanRow.transmision || 'Manual').trim(),
-                    combustible: (cleanRow.combustible || 'Nafta').trim(),
-                    color: (cleanRow.color || 'Gris').trim(),
+                    transmision: (cleanRow.transmision || '').trim(),
+                    combustible: (cleanRow.combustible || '').trim(),
+                    color: (cleanRow.color || '').trim(),
                     ciudad: (cleanRow.sucursal || cleanRow.ciudad || 'Tandil').trim(),
                     imagenes: doImages.length > 0 ? doImages : parseImagesField(cleanRow.imagenes),
                     descripcion: (cleanRow.descripcion_para_publicacion || cleanRow.descripcion || '').trim(),
@@ -419,7 +419,7 @@ function renderCatalogGrid() {
     filteredVehicles.forEach(car => {
         const mainImage = car.imagenes.length > 0 
             ? car.imagenes[0] 
-            : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800'; // Clean placeholder car image
+            : 'logo-bari.jpg'; // Clean placeholder car image
 
         // Create Badge markup
         let statusClass = 'badge-available';
@@ -435,7 +435,7 @@ function renderCatalogGrid() {
         card.setAttribute('aria-label', `${car.marca} ${car.modelo} ${car.anio}`);
         card.innerHTML = `
             <div class="car-image-wrapper" ${cardOpacityStyle}>
-                <img src="${mainImage}" alt="${car.marca} ${car.modelo}" loading="lazy">
+                <img src="${mainImage}" alt="${car.marca} ${car.modelo}" loading="lazy" onerror="this.onerror=null;this.src='logo-bari.jpg';">
                 <span class="car-status-badge ${statusClass}">${car.estado}</span>
             </div>
             <div class="car-info">
@@ -545,9 +545,9 @@ function openModal(car, skipPushState = false) {
     modalCarPrice.textContent = `${car.moneda} ${formatNumber(car.precio)}`;
     modalSpecYear.textContent = car.anio;
     modalSpecKm.textContent = `${formatNumber(car.kilometros)} km`;
-    modalSpecTransmission.textContent = car.transmision;
-    modalSpecFuel.textContent = car.combustible;
-    modalSpecColor.textContent = car.color;
+    modalSpecTransmission.textContent = car.transmision || '-';
+    modalSpecFuel.textContent = car.combustible || '-';
+    modalSpecColor.textContent = car.color || '-';
     modalCarDescription.textContent = car.descripcion || 'Sin descripción adicional disponible.';
     
     // Status Badge setup
@@ -560,7 +560,7 @@ function openModal(car, skipPushState = false) {
     // Gallery configuration
     currentImages = car.imagenes.length > 0 
         ? car.imagenes 
-        : ['https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800'];
+        : ['logo-bari.jpg'];
     
     // Build thumbnails once when opening modal
     modalThumbnails.innerHTML = '';
@@ -643,7 +643,7 @@ function updateModalGallery() {
     // Set main image
     modalMainImage.src = currentImages[currentImageIndex];
     modalMainImage.onerror = function() {
-        this.src = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800';
+        this.src = 'logo-bari.jpg';
     };
     
     // Navigation arrows visible state
@@ -837,7 +837,7 @@ function populateSocialCard(car) {
     const scImage = document.getElementById('sc-image');
     scImage.src = car.imagenes && car.imagenes.length > 0 
         ? car.imagenes[0] 
-        : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=1080';
+        : 'logo-bari.jpg';
 
     // Status
     const scStatus = document.getElementById('sc-status');
