@@ -4,9 +4,9 @@
 // ===================================================
 
 const N8N_WEBHOOK_URL_PUBLICAR = "https://bipolos.app.n8n.cloud/webhook/bari-autos";
-// Webhook que dispara la carga de imágenes a Digital Ocean (antes era un Sheets Trigger)
+// Webhook que dispara la carga de imágenes a Digital Ocean 
 // GAS llama directamente con los datos correctos luego del sort, evitando el bug de fila.
-const N8N_WEBHOOK_URL_IMAGENES = "https://bipolos.app.n8n.cloud/webhook/bari-imagenes"; // ← Reemplazá con la URL real de tu webhook de imágenes
+const N8N_WEBHOOK_URL_IMAGENES = "https://bipolos.app.n8n.cloud/webhook/bari-imagenes"; 
 const HORA_CORTE = 18;
 
 // ── Colores de fila ───────────────────────────────────
@@ -30,8 +30,15 @@ const SNAPSHOT_FIELD_KEYS = [
 // MENÚ PRINCIPAL
 // =====================================================
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('🚗 Bari Admin')
+  const ui = SpreadsheetApp.getUi();
+
+  // Menú original del cliente
+  ui.createMenu("🛠️ Utilidades")
+    .addItem("🗑 Eliminar registro seleccionado", "eliminarRegistro")
+    .addToUi();
+
+  // Menú nuevo del sistema
+  ui.createMenu('🚗 Bari Admin')
     .addItem('🚘 Cargar Vehículo', 'openMeliSidebar')
     .addSeparator()
     .addItem('⚡ Publicar / Actualizar en redes', 'publishActiveRow')
@@ -191,6 +198,7 @@ function sendRowToN8n(action) {
     const publicarVal = (carData['publicar'] || '').toString().trim().toUpperCase();
     const precio      = parseFloat(carData['precio_final_en_ars']) || 0;
     const urlFotos    = (carData['url_fotos_drive'] || '').toString().trim();
+    const tipoPub     = (carData['tipo_publicacion_ml'] || '').toString().trim();
 
     if (publicarVal !== 'SI') {
       SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'La columna "Publicar" debe estar en "SI".\nPrimero cambiá el valor a SI.', SpreadsheetApp.getUi().ButtonSet.OK);
@@ -202,6 +210,10 @@ function sendRowToN8n(action) {
     }
     if (urlFotos === '') {
       SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'El vehículo debe tener una "URL Fotos Drive" cargada para poder publicarse.', SpreadsheetApp.getUi().ButtonSet.OK);
+      return;
+    }
+    if (tipoPub === '') {
+      SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'Falta seleccionar el "Tipo de Publicación ML" (Plata, Oro, etc). Por favor, completalo en la columna correspondiente antes de publicar.', SpreadsheetApp.getUi().ButtonSet.OK);
       return;
     }
   }
@@ -352,6 +364,26 @@ function onEdit(e) {
   const rowIndex = e.range.getRow();
   if (rowIndex <= 1) return;
   const headersMap = getHeadersMap(sheet);
+  
+  // Validar si cambiaron "Publicar" a "SI" manualmente
+  const colPublicar = headersMap['publicar'];
+  if (colPublicar && e.range.getColumn() === colPublicar && e.value && e.value.toUpperCase() === 'SI') {
+    const precio = parseFloat(sheet.getRange(rowIndex, headersMap['precio_final_en_ars'] || 0).getValue()) || 0;
+    const urlFotos = sheet.getRange(rowIndex, headersMap['url_fotos_drive'] || 0).getValue().toString().trim();
+    const tipoPub = sheet.getRange(rowIndex, headersMap['tipo_publicacion_ml'] || 0).getValue().toString().trim();
+    
+    let errorMsg = '';
+    if (precio <= 0) errorMsg = 'El vehículo no tiene Precio Final cargado.';
+    else if (urlFotos === '') errorMsg = 'El vehículo no tiene URL de Fotos Drive cargada.';
+    else if (tipoPub === '') errorMsg = 'Falta el "Tipo de Publicación ML" (Plata, Oro, etc).';
+    
+    if (errorMsg !== '') {
+      e.range.setValue('NO');
+      SpreadsheetApp.getUi().alert('⚠️ Publicación Bloqueada', errorMsg + '\n\nSe restauró el valor a "NO". Completá los datos antes de publicar.', SpreadsheetApp.getUi().ButtonSet.OK);
+      return; // Stop execution
+    }
+  }
+
   const colDominio = headersMap['dominio'];
   if (!colDominio) return;
 
@@ -608,8 +640,28 @@ function deleteSelectedRow() {
   );
   if (resp !== ui.Button.YES) return;
 
+  // ===================================================
+  // GUARDAR REGISTRO HISTÓRICO (LOG) ANTES DE BORRAR
+  // ===================================================
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ultimaColumna = sheet.getLastColumn();
+  var valores = sheet.getRange(row, 1, 1, ultimaColumna).getValues()[0];
+
+  var logSheet = ss.getSheetByName("LOG");
+  if (!logSheet) {
+    logSheet = ss.insertSheet("LOG");
+    var encabezados = ["Fecha", "Usuario", "Hoja", "Fila original"];
+    var titulos = sheet.getRange(1, 1, 1, ultimaColumna).getValues()[0];
+    logSheet.appendRow(encabezados.concat(titulos));
+    logSheet.hideSheet();
+  }
+  
+  var usuario = Session.getActiveUser().getEmail() || "Desconocido";
+  var logRow = [new Date(), usuario, sheet.getName(), row].concat(valores);
+  logSheet.appendRow(logRow);
+
   sheet.deleteRow(row);
-  ui.alert('✅ Fila eliminada correctamente.');
+  ui.alert('✅ Fila eliminada correctamente y guardada en el LOG.');
 }
 
 // =====================================================
@@ -710,6 +762,7 @@ function writeNewVehicle(data) {
     setVal('url_foto_miniatura',        data.urlMiniatura);
     setVal('descripcion_para_publicacion', data.descripcion);
     setVal('comentario_interno',        data.comentario);
+    setVal('tipo_publicacion_ml',       data.tipoPublicacionML);
     
     // --- Fórmulas automáticas ---
     var urlFotosCol  = map['url_fotos_drive'];
@@ -811,5 +864,93 @@ function sortStockBySegmento(sheet, map) {
   } catch (e) {
     // No interrumpimos el guardado si el sort falla
     console.error('sortStockBySegmento error: ' + e.message);
+  }
+}
+
+// =====================================================
+// FUNCIONES ORIGINALES DEL CLIENTE
+// =====================================================
+
+function eliminarRegistro() {
+  const NOMBRE_HOJA = "STOCK";
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const hoja = ss.getSheetByName(NOMBRE_HOJA) || ss.getSheetByName("Stock");
+
+  const fila = hoja.getActiveCell().getRow();
+
+  if (fila <= 1) {
+    SpreadsheetApp.getUi().alert("Seleccione una fila de datos.");
+    return;
+  }
+
+  const ultimaColumna = hoja.getLastColumn();
+
+  const rango = hoja.getRange(fila, 1, 1, ultimaColumna);
+
+  const valores = rango.getValues()[0];
+  const formulas = rango.getFormulas()[0];
+
+  // Verificar si hay datos cargados
+  let tieneDatos = false;
+
+  for (let i = 0; i < ultimaColumna; i++) {
+    if (formulas[i] === "" && valores[i] !== "") {
+      tieneDatos = true;
+      break;
+    }
+  }
+
+  if (!tieneDatos) {
+    SpreadsheetApp.getUi().alert("La fila seleccionada ya está vacía.");
+    return;
+  }
+
+  //===================================================
+  // CREAR HOJA LOG SI NO EXISTE
+  //===================================================
+
+  let log = ss.getSheetByName("LOG");
+
+  if (!log) {
+    log = ss.insertSheet("LOG");
+
+    const encabezados = [
+      "Fecha",
+      "Usuario",
+      "Hoja",
+      "Fila original"
+    ];
+
+    const titulos = hoja.getRange(1,1,1,ultimaColumna).getValues()[0];
+
+    log.appendRow(encabezados.concat(titulos));
+
+    log.hideSheet();
+  }
+
+  //===================================================
+  // REGISTRAR ELIMINACIÓN
+  //===================================================
+
+  const usuario = Session.getActiveUser().getEmail() || "Desconocido";
+
+  log.appendRow([
+    new Date(),
+    usuario,
+    hoja.getName(),
+    fila,
+    ...valores
+  ]);
+
+  //===================================================
+  // BORRAR ÚNICAMENTE CELDAS EDITABLES
+  //===================================================
+
+  for (let i = 0; i < ultimaColumna; i++) {
+    // Solo borra las celdas que NO tienen fórmula
+    if (formulas[i] === "") {
+      hoja.getRange(fila, i + 1).clearContent();
+    }
   }
 }

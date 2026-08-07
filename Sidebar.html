@@ -300,6 +300,16 @@
           </select>
         </div>
         <div class="field">
+          <label>Oportunidad</label>
+          <select id="oportunidad">
+            <option value="">--</option>
+            <option>SI</option>
+            <option>NO</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
           <label>Publicar</label>
           <select id="publicar">
             <option value="NO" selected>NO</option>
@@ -307,11 +317,12 @@
           </select>
         </div>
         <div class="field">
-          <label>Oportunidad</label>
-          <select id="oportunidad">
-            <option value="">--</option>
-            <option>SI</option>
-            <option>NO</option>
+          <label>Tipo Pub. ML</label>
+          <select id="tipoPublicacionML">
+            <option value="">-- Elegir --</option>
+            <option value="silver">Plata</option>
+            <option value="gold">Oro / Clásica</option>
+            <option value="gold_premium">Oro Premium</option>
           </select>
         </div>
       </div>
@@ -632,6 +643,12 @@
       if (!document.getElementById('sucursal').value)          errores.push('Sucursal');
       if (!document.getElementById('estado').value)            errores.push('Estado');
       if (!document.getElementById('combustible').value)       errores.push('Combustible');
+      
+      var publicarSelect = document.getElementById('publicar').value;
+      var tipoPubSelect = getValId('tipoPublicacionML');
+      if (publicarSelect === 'SI' && !tipoPubSelect) {
+        errores.push('Tipo Pub. ML (Requerido para publicar)');
+      }
 
       if (errores.length > 0) {
         statusMsg.innerHTML = '<span style="color:#c62828">⚠️ Faltan: ' + errores.join(', ') + '</span>';
@@ -667,7 +684,8 @@
         urlFotos:     document.getElementById('urlFotos').value.trim(),
         urlMiniatura: document.getElementById('urlMiniatura').value.trim(),
         descripcion:  document.getElementById('descripcion').value.trim(),
-        comentario:   document.getElementById('comentario').value.trim()
+        comentario:   document.getElementById('comentario').value.trim(),
+        tipoPublicacionML: tipoPubSelect
       };
 
       statusMsg.innerHTML = '<span style="color:#1565c0">⏳ Guardando...</span>';
