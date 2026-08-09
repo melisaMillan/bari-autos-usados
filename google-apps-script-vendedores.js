@@ -5,7 +5,7 @@
 const MASTER_SPREADSHEET_ID = '1HPh4fpzM5b7PlpG3RnH6tYhTcWqfs7SFfIf3-klrxnI';
 const HORA_CORTE = 18;
 // Podes agregar más correos separandolos por comas
-const EMAILS_NOTIFICACION_VENTAS = ['ventas@bari.com','melisa.millan.mm@gmail.com']; 
+const EMAILS_NOTIFICACION_VENTAS = ['melisa.millan.mm@gmail.com', 'hugo.zorra@bari-mercedesbenz.com.ar', 'mariano.boberi@bari-mercedesbenz.com.ar', 'dario.lopez@bari-mercedesbenz.com.ar', 'mario.mapelli@bari-mercedesbenz.com.ar', 'carolina.bardon@bari-mercedesbenz.com.ar', 'marcela.fegan@bari-mercedesbenz.com.ar', 'juan_pablo.krvavica@bari-mercedesbenz.com.ar', 'natalia.alfaro@bari-mercedesbenz.com.ar', 'sofia.ferrari@bari-mercedesbenz.com.ar', 'florencia.schiaratura@bari-mercedesbenz.com.ar', 'jls@bari-mercedesbenz.com.ar', 'luciano.schiaratura@bari-mercedesbenz.com.ar', 'carlos.acosta@bari-mercedesbenz.com.ar', 'carlos.gomez@bari-mercedesbenz.com.ar', 'nicolas.llahi@bari-mercedesbenz.com.ar', 'rodrigo.garcia@bari-mercedesbenz.com.ar', 'florencio.calvo@bari-mercedesbenz.com.ar', 'juan_cruz.montaner@bari-mercedesbenz.com.ar', 'fabriprieto@hotmail.com', 'hugodisantoro@gmail.com','juan.ignacio.velazquez@bari-mercedesbenz.com.ar', 'osvaldo.castellano@bari-mercedesbenz.com.ar', 'constanza.romero@bari-mercedesbenz.com.ar', 'alejandro.picazo@bari-mercedesbenz.com.ar', 'marcelo.rotonda@bari-mercedesbenz.com.ar', 'luciano.valerga@bari-mercedesbenz.com.ar', 'cristian.dumerauf@bari-mercedesbenz.com.ar', 'carlos.dambolena@bari-mercedesbenz.com.ar'];
 
 function onOpen() {
   SpreadsheetApp.getUi()

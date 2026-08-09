@@ -151,7 +151,7 @@ function processReleaseLogic(masterSheet, rowIndex) {
 // CRON JOB: libera reservas vencidas (trigger diario)
 // =====================================================
 function checkExpiredReservations() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Stock');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Stock') || SpreadsheetApp.getActiveSpreadsheet().getSheetByName('STOCK');
   const data    = sheet.getDataRange().getValues();
   const headers = getHeadersMap(sheet);
   const colEstado     = headers['estado'];
@@ -172,8 +172,29 @@ function checkExpiredReservations() {
 // =====================================================
 // N8N: PUBLICAR / ELIMINAR
 // =====================================================
-function publishActiveRow() { sendRowToN8n('Publicar'); }
-function deleteActiveRow()   { sendRowToN8n('Eliminar'); }
+const ALLOWED_EMAILS = [
+  'melisa.millan.mm@gmail.com',
+  'mario.mapelli@bari-mercedesbenz.com.ar',
+  'luciano.schiaratura@bari-mercedesbenz.com.ar',
+  'mmillan@bipolos.com'
+];
+
+function checkPermissions() {
+  const userEmail = Session.getActiveUser().getEmail();
+  if (userEmail && !ALLOWED_EMAILS.includes(userEmail.toLowerCase())) {
+    SpreadsheetApp.getUi().alert('⛔ Acceso Denegado', 'Tu usuario (' + userEmail + ') no tiene permisos para realizar esta acción.', SpreadsheetApp.getUi().ButtonSet.OK);
+    return false;
+  }
+  return true;
+}
+
+function publishActiveRow() { 
+  if (checkPermissions()) sendRowToN8n('Publicar'); 
+}
+
+function deleteActiveRow() { 
+  if (checkPermissions()) sendRowToN8n('Eliminar'); 
+}
 
 function sendRowToN8n(action) {
   const sheet = SpreadsheetApp.getActiveSheet();
@@ -198,12 +219,36 @@ function sendRowToN8n(action) {
     const publicarVal = (carData['publicar'] || '').toString().trim().toUpperCase();
     const precio      = parseFloat(carData['precio_final_en_ars']) || 0;
     const urlFotos    = (carData['url_fotos_drive'] || '').toString().trim();
-    const tipoPub     = (carData['tipo_publicacion_ml'] || '').toString().trim();
+    let tipoPub       = (carData['tipo_publicacion_ml'] || '').toString().trim();
+
+    // Mapeo a IDs de MercadoLibre
+    const tipoPubLower = tipoPub.toLowerCase();
+    if (tipoPubLower.includes('premium')) tipoPub = 'gold_premium';
+    else if (tipoPubLower.includes('oro') || tipoPubLower.includes('clásica') || tipoPubLower.includes('clasica') || tipoPubLower === 'gold') tipoPub = 'gold';
+    else if (tipoPubLower.includes('plata') || tipoPubLower === 'silver') tipoPub = 'silver';
+    
+    carData['tipo_publicacion_ml'] = tipoPub;
 
     if (publicarVal !== 'SI') {
       SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'La columna "Publicar" debe estar en "SI".\nPrimero cambiá el valor a SI.', SpreadsheetApp.getUi().ButtonSet.OK);
       return;
     }
+    
+    // Validar campos obligatorios
+    const requiredFields = ['segmento', 'marca', 'modelo', 'año', 'dominio', 'km', 'transmisión', 'color'];
+    const missingFields = [];
+    requiredFields.forEach(field => {
+      const fieldKey = field.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+      if (!carData[fieldKey] || carData[fieldKey].toString().trim() === '') {
+        missingFields.push(field);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      SpreadsheetApp.getUi().alert('⚠️ Faltan datos obligatorios', 'Para publicar, el vehículo debe tener completos los siguientes campos obligatorios:\n\n' + missingFields.join(', '), SpreadsheetApp.getUi().ButtonSet.OK);
+      return;
+    }
+
     if (precio <= 0) {
       SpreadsheetApp.getUi().alert('⚠️ Error al publicar', 'El vehículo debe tener un "Precio final en ARS" cargado para poder publicarse.', SpreadsheetApp.getUi().ButtonSet.OK);
       return;
@@ -359,7 +404,7 @@ function isRowOutdated(sheet, rowIndex, headersMap, snapData) {
 function onEdit(e) {
   if (!e) return;
   const sheet = e.source.getActiveSheet();
-  if (sheet.getName() !== 'Stock') return;
+  if (sheet.getName().toUpperCase() !== 'STOCK') return;
 
   const rowIndex = e.range.getRow();
   if (rowIndex <= 1) return;
@@ -487,7 +532,7 @@ function onEditInstalable(e) {
  */
 function testImageWebhook() {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Stock');
+  const sheet = ss.getSheetByName('Stock') || ss.getSheetByName('STOCK');
   const row   = sheet.getActiveCell().getRow();
   if (row <= 1) { SpreadsheetApp.getUi().alert('Seleccioná una fila de datos primero.'); return; }
 
@@ -593,7 +638,7 @@ function getVendedores() {
 function deleteSelectedRow() {
   var ui    = SpreadsheetApp.getUi();
   var sheet = SpreadsheetApp.getActiveSheet();
-  if (sheet.getName() !== 'Stock') {
+  if (sheet.getName().toUpperCase() !== 'STOCK') {
     ui.alert('⚠️ Posicioná el cursor en la hoja Stock antes de eliminar.');
     return;
   }
@@ -696,7 +741,7 @@ function columnToLetter(column) {
 function writeNewVehicle(data) {
   try {
     var ss    = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName('Stock') || ss.getActiveSheet();
+    var sheet = ss.getSheetByName('Stock') || ss.getSheetByName('STOCK') || ss.getActiveSheet();
     var lastRow = sheet.getLastRow();
     
     // Encontrar la primera fila vacía (columna B = Marca)
@@ -853,7 +898,7 @@ function sortStockBySegmento(sheet, map) {
     var colSegmento = map ? map['segmento'] : null;
     if (!colSegmento) {
       // Si no recibimos el mapa, lo obtenemos nosotros
-      sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Stock');
+      sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Stock') || SpreadsheetApp.getActiveSpreadsheet().getSheetByName('STOCK');
       colSegmento = getHeadersMap(sheet)['segmento'];
     }
     if (!colSegmento) return;

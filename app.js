@@ -9,9 +9,10 @@
 // Example: 'https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv'
 // const CSV_URL = 'cars-mock.csv';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsjdvcV1oZXIKTXmK2GAQgKlqceFDYtfHK55lVl8dn9CqQg7Qlh5tlEeLaAeptH_pJvYLKCb3zQQ1v/pub?gid=1061368151&single=true&output=csv';
+const CONFIG_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsjdvcV1oZXIKTXmK2GAQgKlqceFDYtfHK55lVl8dn9CqQg7Qlh5tlEeLaAeptH_pJvYLKCb3zQQ1v/pub?gid=1740885014&single=true&output=csv';
 
 // Contact WhatsApp number (with country code, no +, no spaces, e.g. '5492231234567')
-const WHATSAPP_PHONE = '5492262354705'; // Bari S.A. contact number
+const WHATSAPP_PHONE = '5492494516160'; // Bari S.A. contact number
 
 // --- STATE MANAGEMENT ---
 let vehicles = [];
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     setupCarouselSwipe();
     setupSocialCardButton();
+    fetchAndLoadConfig();
     // Set footer year dynamically
     const yearEl = document.getElementById('footer-year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -881,6 +883,86 @@ function blobToBase64(blob) {
         reader.onload = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
         reader.onerror = reject;
         reader.readAsDataURL(blob);
+    });
+}
+
+// --- FETCH CONFIG ---
+function fetchAndLoadConfig() {
+    let targetUrl = CONFIG_CSV_URL;
+    if (targetUrl && targetUrl.includes('/edit')) {
+        targetUrl = targetUrl.split('/edit')[0] + '/export?format=csv';
+    }
+
+    Papa.parse(targetUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            if (results.errors.length > 0) {
+                console.warn('Config CSV parsing errors:', results.errors);
+            }
+            if (!results.data || results.data.length === 0) return;
+            
+            const configRow = results.data[0];
+            const cleanConfig = {};
+            Object.keys(configRow).forEach(key => {
+                const cleanKey = key.trim().toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+                    .replace(/\s+/g, '_');
+                cleanConfig[cleanKey] = configRow[key];
+            });
+
+            // Email
+            if (cleanConfig.email) {
+                const el = document.getElementById('footer-email');
+                if (el) {
+                    el.href = 'mailto:' + cleanConfig.email;
+                    el.textContent = cleanConfig.email;
+                }
+            }
+            // Socials
+            if (cleanConfig.instagram) {
+                const el = document.getElementById('footer-ig');
+                if (el) el.href = cleanConfig.instagram;
+            }
+            if (cleanConfig.facebook) {
+                const el = document.getElementById('footer-fb');
+                if (el) el.href = cleanConfig.facebook;
+            }
+
+            // Helper to inject phone/text and hide if empty
+            const injectConfig = (id, key, prefix = '') => {
+                const el = document.getElementById(id);
+                const li = document.getElementById('li-' + id);
+                if (cleanConfig[key]) {
+                    if (el) {
+                        el.href = 'tel:' + cleanConfig[key].replace(/\D/g, '');
+                        el.textContent = prefix + cleanConfig[key];
+                    }
+                    if (li) li.style.display = 'list-item';
+                } else {
+                    if (li) li.style.display = 'none';
+                }
+            };
+
+            // Tandil
+            injectConfig('tandil-gen', 'tandil_general');
+            injectConfig('tandil-adm', 'tandil_adm');
+            injectConfig('tandil-serv', 'tandil_serv');
+            injectConfig('tandil-rep', 'tandil_rep');
+
+            // Olavarría
+            injectConfig('ola-gen', 'olavarria_general');
+            injectConfig('ola-adm', 'olavarria_adm');
+            injectConfig('ola-serv', 'olavarria_serv');
+            injectConfig('ola-rep', 'olavarria_rep');
+
+            // Bahía Blanca
+            injectConfig('bahia-gen', 'bahia_general');
+            injectConfig('bahia-adm', 'bahia_adm');
+            injectConfig('bahia-serv', 'bahia_serv');
+            injectConfig('bahia-rep', 'bahia_rep');
+        }
     });
 }
 
