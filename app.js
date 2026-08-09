@@ -930,8 +930,22 @@ function fetchAndLoadConfig() {
                 if (el) el.href = cleanConfig.facebook;
             }
 
+            // Tagline (Texto arriba del mail)
+            if (cleanConfig.texto_arriba) {
+                const el = document.getElementById('footer-tagline');
+                if (el) el.innerHTML = cleanConfig.texto_arriba;
+            }
+
+            // Helper to inject text directly
+            const injectText = (id, key) => {
+                const el = document.getElementById(id);
+                if (cleanConfig[key] && el) {
+                    el.innerHTML = cleanConfig[key];
+                }
+            };
+
             // Helper to inject phone/text and hide if empty
-            const injectConfig = (id, key, prefix = '') => {
+            const injectPhone = (id, key, prefix = '') => {
                 const el = document.getElementById(id);
                 const li = document.getElementById('li-' + id);
                 if (cleanConfig[key]) {
@@ -946,22 +960,25 @@ function fetchAndLoadConfig() {
             };
 
             // Tandil
-            injectConfig('tandil-gen', 'tandil_general');
-            injectConfig('tandil-adm', 'tandil_adm');
-            injectConfig('tandil-serv', 'tandil_serv');
-            injectConfig('tandil-rep', 'tandil_rep');
+            injectPhone('tandil-gen', 'tandil_general');
+            injectPhone('tandil-adm', 'tandil_adm');
+            injectPhone('tandil-serv', 'tandil_serv');
+            injectPhone('tandil-rep', 'tandil_rep');
+            injectText('tandil-hours', 'horarios_tandil');
 
             // Olavarría
-            injectConfig('ola-gen', 'olavarria_general');
-            injectConfig('ola-adm', 'olavarria_adm');
-            injectConfig('ola-serv', 'olavarria_serv');
-            injectConfig('ola-rep', 'olavarria_rep');
+            injectPhone('ola-gen', 'olavarria_general');
+            injectPhone('ola-adm', 'olavarria_adm');
+            injectPhone('ola-serv', 'olavarria_serv');
+            injectPhone('ola-rep', 'olavarria_rep');
+            injectText('ola-hours', 'horarios_olavarria');
 
             // Bahía Blanca
-            injectConfig('bahia-gen', 'bahia_general');
-            injectConfig('bahia-adm', 'bahia_adm');
-            injectConfig('bahia-serv', 'bahia_serv');
-            injectConfig('bahia-rep', 'bahia_rep');
+            injectPhone('bahia-gen', 'bahia_general');
+            injectPhone('bahia-adm', 'bahia_adm');
+            injectPhone('bahia-serv', 'bahia_serv');
+            injectPhone('bahia-rep', 'bahia_rep');
+            injectText('bahia-hours', 'horarios_bahia');
         }
     });
 }
