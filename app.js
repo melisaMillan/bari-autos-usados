@@ -617,6 +617,11 @@ function openModal(car, skipPushState = false) {
         ogImage.setAttribute('content', currentImages[0]);
     }
 
+    let canonical = document.getElementById('canonical-link');
+    if(canonical) {
+        canonical.setAttribute('href', `https://bariusados.com.ar/?auto=${car.slug}`);
+    }
+
     // Dynamic JSON-LD for this specific car
     injectVehicleSchema(car);
 }
@@ -636,6 +641,11 @@ function closeModal(skipPushState = false) {
     
     let ogImage = document.querySelector('meta[property="og:image"]');
     if(ogImage) ogImage.setAttribute('content', ORIGINAL_OG_IMAGE);
+
+    let canonical = document.getElementById('canonical-link');
+    if(canonical) {
+        canonical.setAttribute('href', 'https://bariusados.com.ar/');
+    }
 
     removeVehicleSchema();
 }
