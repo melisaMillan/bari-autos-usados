@@ -235,7 +235,14 @@ function sendRowToN8n(action) {
     }
     
     // Validar campos obligatorios
-    const requiredFields = ['segmento', 'marca', 'modelo', 'año', 'dominio', 'km', 'transmisión', 'color'];
+    const requiredFields = ['segmento', 'marca', 'modelo', 'año', 'dominio', 'km', 'transmisión', 'color', 'combustible'];
+    
+    // Si no es un camión pesado, exigir también puertas
+    const domainML = (carData['segmento'] && carData['segmento'].toString().toUpperCase() === 'PESADOS') ? 'MLA-TRUCKS' : 'MLA-CARS_AND_LIGHT_TRUCKS';
+    if (domainML !== 'MLA-TRUCKS') {
+      requiredFields.push('puertas');
+    }
+
     const missingFields = [];
     requiredFields.forEach(field => {
       const fieldKey = field.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
@@ -298,6 +305,18 @@ function sendRowToN8n(action) {
       } else if (action === 'Eliminar') {
         rowRange.setBackground(COLOR_ELIMINATED);
         removePublicationSnapshot(carData['dominio']); // Borrar snapshot por dominio
+        
+        // Borrar registro de la hoja oculta Publicaciones
+        const pSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publicaciones');
+        if (pSheet) {
+          const pData = pSheet.getDataRange().getValues();
+          for (let i = 1; i < pData.length; i++) {
+            if (pData[i][0] === carData['dominio']) {
+              pSheet.deleteRow(i + 1);
+              break;
+            }
+          }
+        }
       }
       SpreadsheetApp.getActiveSpreadsheet().toast('✅ ¡Operación exitosa!', 'n8n', 4);
     } else {
@@ -787,6 +806,7 @@ function writeNewVehicle(data) {
     // --- Comercial ---
     setVal('sucursal',          data.sucursal);
     setVal('vendedor',          data.vendedor);
+    setVal('entregado_por',     data.entregado_por);
     setVal('fecha_toma',        new Date());
     var precioFinalVal = data.precioFinal ? parseFloat(data.precioFinal.toString().replace(/\./g, '').replace(',', '.')) : null;
     if (precioFinalVal) setVal('precio_final_en_ars', precioFinalVal);

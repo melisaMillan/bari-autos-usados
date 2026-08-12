@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o4nxhMt4EcGatRVtn0vXnX8Z68hCt5ttQm5vcQ3EHGYMoKFf9jMZA8-15YMimPOMDPs1UNmW8_6m/pub?gid=1637747501&single=true&output=csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsjdvcV1oZXIKTXmK2GAQgKlqceFDYtfHK55lVl8dn9CqQg7Qlh5tlEeLaAeptH_pJvYLKCb3zQQ1v/pub?gid=929531639&single=true&output=csv';
 const SITE_URL = 'https://bariusados.com.ar';
 
 async function generateSitemap() {

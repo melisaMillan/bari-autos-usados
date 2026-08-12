@@ -157,7 +157,7 @@
       </div>
 
       <div class="field" id="trimContainer">
-        <label>Versión <span class="req">*</span></label>
+        <label>Versión</label>
         <select id="trim" disabled><option>Seleccioná modelo...</option></select>
       </div>
 
@@ -239,6 +239,11 @@
             <option value="">Cargando...</option>
           </select>
         </div>
+      </div>
+
+      <div class="field">
+        <label>Entregado por <span class="req">*</span></label>
+        <input type="text" id="entregadoPor" placeholder="Persona que entregó la unidad">
       </div>
 
       <div class="field">
@@ -428,7 +433,7 @@
     }
 
     function resetDesdeModelo() {
-      trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim" disabled><option>Seleccioná modelo...</option></select>';
+      trimContainer.innerHTML = '<label>Versión</label><select id="trim" disabled><option>Seleccioná modelo...</option></select>';
       resetExtras();
     }
 
@@ -566,12 +571,12 @@
         document.getElementById('trim').disabled = true;
         
         google.script.run.withSuccessHandler(function(data) {
-          if (!data || data.error || data.length === 0) {
-            trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><input type="text" id="trim" placeholder="Escribí la versión">';
-            return;
+          if (data.status === 404 || data.length === 0) {
+            trimContainer.innerHTML = '<label>Versión</label><input type="text" id="trim" placeholder="Escribí la versión">';
+          } else {
+            trimContainer.innerHTML = '<label>Versión</label><select id="trim"></select>';
+            fillCombo('trim', data, '-- Seleccionar Versión --');
           }
-          trimContainer.innerHTML = '<label>Versión <span class="req">*</span></label><select id="trim"></select>';
-          fillCombo('trim', data, '-- Seleccionar Versión --');
         }).fetchN8nWebhook(url);
       }
     });
@@ -592,8 +597,15 @@
         fallbackToInput('yearContainer', '<label>Año <span class="req">*</span></label>', 'year', 'Ej: 2020');
         loadExtra('DOORS', 'doorContainer', 'door', '<label>Puertas <span class="req">*</span></label>', 'N° puertas', baseParams);
         loadExtra('COLOR', 'colorContainer', 'color', '<label>Color</label>', 'Color', baseParams);
-        // Transmisión: siempre manual (sin llamada a n8n)
-        fallbackToInput('transContainer', '<label>Transmisión</label>', 'transmision', 'Ej: Manual / Automática');
+        // Transmisión: select manual
+        var transContainer = document.getElementById('transContainer');
+        transContainer.innerHTML = '<label>Transmisión <span class="req">*</span></label>' +
+          '<select id="transmision">' +
+          '<option value="">Seleccionar...</option>' +
+          '<option value="Manual">Manual</option>' +
+          '<option value="Automática">Automática</option>' +
+          '<option value="Automatizada">Automatizada</option>' +
+          '</select>';
       }
     });
 
@@ -635,7 +647,6 @@
       if (!segSel.value)                                        errores.push('Segmento');
       if (!getValId('brand'))                                   errores.push('Marca');
       if (!getVal('model'))                                     errores.push('Modelo');
-      if (!getVal('trim') && !isTruck)                          errores.push('Versión');
       if (!getVal('year'))                                      errores.push('Año');
       if (!getVal('door') && !isTruck)                          errores.push('Puertas');
       if (!document.getElementById('dominio').value.trim())    errores.push('Dominio / Patente');
@@ -643,11 +654,19 @@
       if (!document.getElementById('sucursal').value)          errores.push('Sucursal');
       if (!document.getElementById('estado').value)            errores.push('Estado');
       if (!document.getElementById('combustible').value)       errores.push('Combustible');
+      if (!document.getElementById('entregadoPor').value.trim()) errores.push('Entregado por');
       
       var publicarSelect = document.getElementById('publicar').value;
       var tipoPubSelect = getValId('tipoPublicacionML');
-      if (publicarSelect === 'SI' && !tipoPubSelect) {
-        errores.push('Tipo Pub. ML (Requerido para publicar)');
+      var precioFinal = document.getElementById('precioFinal').value;
+      var urlFotos = document.getElementById('urlFotos').value.trim();
+      var color = getVal('color');
+      
+      if (publicarSelect === 'SI') {
+        if (!tipoPubSelect) errores.push('Tipo Pub. ML (Req. para publicar)');
+        if (!precioFinal || parseFloat(precioFinal) <= 0) errores.push('Precio final (Req. para publicar)');
+        if (!urlFotos) errores.push('URL Fotos Drive (Req. para publicar)');
+        if (!color) errores.push('Color (Req. para publicar)');
       }
 
       if (errores.length > 0) {
@@ -673,6 +692,7 @@
         combustible: document.getElementById('combustible').value,
         sucursal:    document.getElementById('sucursal').value,
         vendedor:    document.getElementById('vendedor').value,
+        entregado_por: document.getElementById('entregadoPor').value.trim(),
         precioFinal: precio,
         precioBasico: document.getElementById('precioBasico').value,
         iva:          document.getElementById('iva').value,
