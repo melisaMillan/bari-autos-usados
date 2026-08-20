@@ -617,10 +617,7 @@ function openModal(car, skipPushState = false) {
         ogImage.setAttribute('content', currentImages[0]);
     }
 
-    let canonical = document.getElementById('canonical-link');
-    if(canonical) {
-        canonical.setAttribute('href', `https://bariusados.com.ar/?auto=${car.slug}`);
-    }
+    setCanonicalTag(`https://bariusados.com.ar/?auto=${car.slug}`);
 
     // Dynamic JSON-LD for this specific car
     injectVehicleSchema(car);
@@ -642,10 +639,7 @@ function closeModal(skipPushState = false) {
     let ogImage = document.querySelector('meta[property="og:image"]');
     if(ogImage) ogImage.setAttribute('content', ORIGINAL_OG_IMAGE);
 
-    let canonical = document.getElementById('canonical-link');
-    if(canonical) {
-        canonical.setAttribute('href', 'https://bariusados.com.ar/');
-    }
+    setCanonicalTag('https://bariusados.com.ar/');
 
     removeVehicleSchema();
 }
@@ -1048,8 +1042,22 @@ function checkDeepLink() {
         const car = vehicles.find(v => v.slug === carSlug);
         if (car) {
             openModal(car, true); // true = we don't need to pushState because it's already in the URL
+        } else {
+            setCanonicalTag('https://bariusados.com.ar/');
         }
+    } else {
+        setCanonicalTag('https://bariusados.com.ar/');
     }
+}
+
+function setCanonicalTag(url) {
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if(!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', url);
 }
 
 function injectVehicleSchema(car) {
