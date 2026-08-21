@@ -137,7 +137,7 @@ function fetchAndLoadCatalog() {
                     version: (cleanRow.version || '').trim(),
                     anio: parseInt(cleanRow.ano || cleanRow.anio) || new Date().getFullYear(),
                     precio: parseNumberString(cleanRow.precio_final_en_ars || cleanRow.precio),
-                    moneda: 'ARS', // Asumimos ARS por la columna precio_final_en_ars
+                    moneda: '$', // Asumimos pesos por defecto
                     tipo: (cleanRow.segmento || cleanRow.tipo || 'Auto').trim(),
                     kilometros: parseNumberString(cleanRow.km || cleanRow.kilometros),
                     transmision: (cleanRow.transmision || '').trim(),
@@ -589,7 +589,7 @@ function openModal(car, skipPushState = false) {
     updateModalGallery();
 
     // WhatsApp CTA building
-    const whatsappMessage = `Hola Bari S.A.! Quisiera consultar sobre el vehículo ${car.marca} ${car.modelo} ${car.version} (${car.anio}) publicado por USD ${formatNumber(car.precio)}. ¿Sigue disponible?`;
+    const whatsappMessage = `Hola Bari S.A.! Quisiera consultar sobre el vehículo ${car.marca} ${car.modelo} ${car.version} (${car.anio}) publicado por ${car.moneda} ${formatNumber(car.precio)}. ¿Sigue disponible?`;
     modalWhatsappBtn.href = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 
     // If sold, disable WhatsApp button and change style
@@ -871,7 +871,7 @@ function populateSocialCard(car) {
     } else {
         if(priceBlock) priceBlock.style.display = 'flex';
         if(financingBlock) financingBlock.style.display = 'none';
-        if(document.getElementById('sc-price')) document.getElementById('sc-price').textContent = `$ ${formatNumber(car.precio)}`;
+        if(document.getElementById('sc-price')) document.getElementById('sc-price').textContent = `${car.moneda} ${formatNumber(car.precio)}`;
     }
 
     // Financiador
