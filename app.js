@@ -421,7 +421,7 @@ function renderCatalogGrid() {
     filteredVehicles.forEach(car => {
         const mainImage = car.imagenes.length > 0 
             ? car.imagenes[0] 
-            : 'logo-bari.jpg'; // Clean placeholder car image
+            : 'logo-bari.png'; // Clean placeholder car image
 
         // Create Badge markup
         let statusClass = 'badge-available';
@@ -437,7 +437,7 @@ function renderCatalogGrid() {
         card.setAttribute('aria-label', `${car.marca} ${car.modelo} ${car.anio}`);
         card.innerHTML = `
             <div class="car-image-wrapper" ${cardOpacityStyle}>
-                <img src="${mainImage}" alt="${car.marca} ${car.modelo}" loading="lazy" onerror="this.onerror=null;this.src='logo-bari.jpg';">
+                <img src="${mainImage}" alt="${car.marca} ${car.modelo}" loading="lazy" onerror="this.onerror=null;this.src='logo-bari.png';">
                 <span class="car-status-badge ${statusClass}">${car.estado}</span>
             </div>
             <div class="car-info">
@@ -562,7 +562,7 @@ function openModal(car, skipPushState = false) {
     // Gallery configuration
     currentImages = car.imagenes.length > 0 
         ? car.imagenes 
-        : ['logo-bari.jpg'];
+        : ['logo-bari.png'];
     
     // Build thumbnails once when opening modal
     modalThumbnails.innerHTML = '';
@@ -649,7 +649,7 @@ function updateModalGallery() {
     // Set main image
     modalMainImage.src = currentImages[currentImageIndex];
     modalMainImage.onerror = function() {
-        this.src = 'logo-bari.jpg';
+        this.src = 'logo-bari.png';
     };
     
     // Navigation arrows visible state
@@ -843,7 +843,7 @@ function populateSocialCard(car) {
     const scImage = document.getElementById('sc-image');
     scImage.src = car.imagenes && car.imagenes.length > 0 
         ? car.imagenes[0] 
-        : 'logo-bari.jpg';
+        : 'logo-bari.png';
 
     // Status
     const scStatus = document.getElementById('sc-status');
