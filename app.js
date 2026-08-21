@@ -177,6 +177,7 @@ function fetchAndLoadCatalog() {
 
             // Build the filter dropdown menus dynamically
             buildFiltersDropdowns();
+            buildVehicleElements();
             
             // Render the initial grid
             applyFilters();
@@ -406,19 +407,8 @@ function sortVehicles() {
 }
 
 // --- RENDER FUNCTIONS ---
-function renderCatalogGrid() {
-    catalogGrid.innerHTML = '';
-    
-    if (filteredVehicles.length === 0) {
-        catalogGrid.classList.add('hidden');
-        noResults.classList.remove('hidden');
-        return;
-    }
-
-    noResults.classList.add('hidden');
-    catalogGrid.classList.remove('hidden');
-
-    filteredVehicles.forEach(car => {
+function buildVehicleElements() {
+    vehicles.forEach(car => {
         const mainImage = car.imagenes.length > 0 
             ? car.imagenes[0] 
             : 'logo-bari.png'; // Clean placeholder car image
@@ -469,7 +459,33 @@ function renderCatalogGrid() {
         
         // Open modal on click
         card.addEventListener('click', () => openModal(car));
-        catalogGrid.appendChild(card);
+        car.element = card;
+    });
+}
+
+function renderCatalogGrid() {
+    if (filteredVehicles.length === 0) {
+        catalogGrid.classList.add('hidden');
+        noResults.classList.remove('hidden');
+        return;
+    }
+
+    noResults.classList.add('hidden');
+    catalogGrid.classList.remove('hidden');
+
+    // First hide all
+    vehicles.forEach(car => {
+        if (car.element) {
+            car.element.style.display = 'none';
+        }
+    });
+
+    // Then show and re-order the filtered ones
+    filteredVehicles.forEach(car => {
+        if (car.element) {
+            car.element.style.display = ''; // Reverts to flex from CSS class
+            catalogGrid.appendChild(car.element);
+        }
     });
 }
 
